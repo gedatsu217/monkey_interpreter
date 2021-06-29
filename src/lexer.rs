@@ -29,7 +29,7 @@ impl Lexer {
 
     pub fn NextToken(&mut self) -> Token{
         let tok: Token;
-        let equal_str = &String::from("=");
+        let assign_str = &String::from("=");
         let semicolon_str = &String::from(";");
         let lparen_str = &String::from("(");
         let rparen_str = &String::from(")");
@@ -37,13 +37,26 @@ impl Lexer {
         let plus_str = &String::from("+");
         let lbrace_str = &String::from("{");
         let rbrace_str = &String::from("}");
+        let minus_str = &String::from("-");
+        let bang_str = &String::from("!");
+        let slash_str = &String::from("/");
+        let asterisk_str = &String::from("*");
+        let lt_str = &String::from("<");
+        let gt_str = &String::from(">");
 
         self.skipWhitespace();
 
         
 
         match &self.ch {
-            Some(s) if s == equal_str => {tok = newToken(token::ASSIGN, &self.ch);},
+            Some(s) if s == assign_str => {
+                if self.peekChar() == Some(String::from("=")) {
+                    self.readChar();
+                    tok = newToken(token::EQ, &Some(String::from("==")));
+                } else {
+                    tok = newToken(token::ASSIGN, &self.ch);
+                }
+            },
             Some(s) if s == semicolon_str => {tok = newToken(token::SEMICOLON, &self.ch);},
             Some(s) if s == lparen_str => {tok = newToken(token::LPAREN, &self.ch);},
             Some(s) if s == rparen_str => {tok = newToken(token::RPAREN, &self.ch);},
@@ -51,6 +64,19 @@ impl Lexer {
             Some(s) if s == plus_str => {tok = newToken(token::PLUS, &self.ch);},
             Some(s) if s == lbrace_str => {tok = newToken(token::LBRACE, &self.ch);},
             Some(s) if s == rbrace_str => {tok = newToken(token::RBRACE, &self.ch);},
+            Some(s) if s == minus_str => {tok = newToken(token::MINUS, &self.ch);},
+            Some(s) if s == bang_str => {
+                if self.peekChar() == Some(String::from("=")) {
+                    self.readChar();
+                    tok = newToken(token::NOT_EQ, &Some(String::from("!=")));
+                } else {
+                    tok = newToken(token::BANG, &self.ch);
+                }
+            },
+            Some(s) if s == slash_str => {tok = newToken(token::SLASH, &self.ch);},
+            Some(s) if s == asterisk_str => {tok = newToken(token::ASTERISK, &self.ch);},
+            Some(s) if s == lt_str => {tok = newToken(token::LT, &self.ch);},
+            Some(s) if s == gt_str => {tok = newToken(token::GT, &self.ch);},
             None => {tok = newToken(token::EOF, &Some(String::from("")))},
             _ => {
                 if isLetter(self.ch.as_ref().unwrap()) {
@@ -92,6 +118,14 @@ impl Lexer {
     fn skipWhitespace(&mut self) {
         while self.ch.as_ref() != None && (*self.ch.as_ref().unwrap() == String::from(" ") || *self.ch.as_ref().unwrap() == String::from("\t") || *self.ch.as_ref().unwrap() == String::from("\n") || *self.ch.as_ref().unwrap() == String::from("\r")) {
             self.readChar();
+        }
+    }
+
+    fn peekChar(&mut self) -> Option<String> {
+        if self.readPosition >= self.input.len() as i32 {
+            None
+        } else {
+            Some(self.input.chars().nth(self.readPosition as usize).unwrap().to_string())
         }
     }
 }

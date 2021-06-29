@@ -39,7 +39,7 @@ pub const RETURN : TokenType   = "RETURN";
 
 
 
-
+#[derive(Debug)]
 pub struct Token {
     pub Type: TokenType,
     pub Literal: String,

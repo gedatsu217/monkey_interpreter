@@ -1,8 +1,10 @@
+extern crate monkey_interpreter;
+use monkey_interpreter::repl;
+use std::io;
+
 fn main() {
-    println!("Hello, world!");
-    let s = String::from("Hello");
-    let a = 1;
-    let slice = &s[0..a];
-    println!("{}", slice);
+    println!("Hello! This is the Monkey programming language!");
+    println!("Feel free to type in commands");
+    repl::Start();
 
 }

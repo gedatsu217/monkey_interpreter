@@ -38,8 +38,10 @@ impl Lexer {
         let lbrace_str = &String::from("{");
         let rbrace_str = &String::from("}");
 
+        self.skipWhitespace();
+
         
-        
+
         match &self.ch {
             Some(s) if s == equal_str => {tok = newToken(token::ASSIGN, &self.ch);},
             Some(s) if s == semicolon_str => {tok = newToken(token::SEMICOLON, &self.ch);},
@@ -49,18 +51,65 @@ impl Lexer {
             Some(s) if s == plus_str => {tok = newToken(token::PLUS, &self.ch);},
             Some(s) if s == lbrace_str => {tok = newToken(token::LBRACE, &self.ch);},
             Some(s) if s == rbrace_str => {tok = newToken(token::RBRACE, &self.ch);},
-
-            _ => {tok = newToken(token::EOF, &Some(String::from("")))},
+            None => {tok = newToken(token::EOF, &Some(String::from("")))},
+            _ => {
+                if isLetter(self.ch.as_ref().unwrap()) {
+                    let literal = self.readIdentifier();
+                    tok = newToken(token::LookupIdent(&literal), &Some(literal));
+                    return tok
+                } else if isDigit(self.ch.as_ref().unwrap()){
+                    tok = newToken(token::INT, &Some(self.readNumber()));
+                    return tok
+                } else {
+                    tok = newToken(token::ILLEGAL, &self.ch)
+                }
+            },
         }
 
         self.readChar();
 
         tok
     }
+
+    fn readIdentifier(&mut self) -> String {
+        let mut res = String::from("");
+        while isLetter(self.ch.as_ref().unwrap()) {
+            res += self.ch.as_ref().unwrap();
+            self.readChar();
+        }
+        res
+    }
+
+    fn readNumber(&mut self) -> String {
+        let mut res = String::from("");
+        while isDigit(self.ch.as_ref().unwrap()) {
+            res += self.ch.as_ref().unwrap();
+            self.readChar();
+        }
+        res
+    }
+
+    fn skipWhitespace(&mut self) {
+        while self.ch.as_ref() != None && (*self.ch.as_ref().unwrap() == String::from(" ") || *self.ch.as_ref().unwrap() == String::from("\t") || *self.ch.as_ref().unwrap() == String::from("\n") || *self.ch.as_ref().unwrap() == String::from("\r")) {
+            self.readChar();
+        }
+    }
 }
 
 fn newToken(tokenType: token::TokenType, ch: &Option<String>) -> Token{
     Token{Type: tokenType, Literal: ch.clone().unwrap()}
+}
+
+fn isLetter(s: &String) -> bool {
+    let ch = s.clone().into_bytes()[0];
+    // alphabet(a-z, A-Z) or _
+    return (97 <= ch && ch <= 122) || (65 <= ch && ch <= 90) || ch == 95
+}
+
+fn isDigit(s: &String) -> bool {
+    let ch = s.clone().into_bytes()[0];
+    // 0-9
+    return 48 <= ch && ch <= 57
 }
 
 

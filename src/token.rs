@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 pub type TokenType = &'static str;
 
 
@@ -25,4 +26,18 @@ pub const LET: TokenType 	   = "LET";
 pub struct Token {
     pub Type: TokenType,
     pub Literal: String,
+}
+
+pub fn LookupIdent(ident: &String) -> TokenType {
+    let mut keywords = HashMap::new();
+    keywords.insert("fn", FUNCTION);
+    keywords.insert("let", LET);
+    let tok: TokenType;
+
+    if keywords.contains_key(ident.as_str()) {
+        let tok = keywords.get(ident.as_str()).unwrap();
+        return tok
+    } 
+
+    IDENT
 }

@@ -130,11 +130,9 @@ fn TestNextToken() {
     ];
 
     let mut l = lexer::New(input);
-    let mut x =0;
+    
     for tt in tests.iter(){
         let tok = l.NextToken();
-        println!("{}", x);
-        x += 1;
         assert_eq!(tok.Type, tt.expectedType);
         assert_eq!(tok.Literal, tt.expectedLiteral);
     }

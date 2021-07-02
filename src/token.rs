@@ -45,6 +45,12 @@ pub struct Token {
     pub Literal: String,
 }
 
+impl Clone for Token {
+    fn clone(&self) -> Self {
+        Token{Type: self.Type, Literal: self.Literal.clone()}
+    }
+}
+
 pub fn LookupIdent(ident: &String) -> TokenType {
     let mut keywords = HashMap::new();
     keywords.insert("fn", FUNCTION);

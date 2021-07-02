@@ -130,7 +130,7 @@ impl Lexer {
     }
 }
 
-fn newToken(tokenType: token::TokenType, ch: &Option<String>) -> Token{
+pub fn newToken(tokenType: token::TokenType, ch: &Option<String>) -> Token{
     Token{Type: tokenType, Literal: ch.clone().unwrap()}
 }
 

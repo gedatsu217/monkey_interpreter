@@ -1,4 +1,13 @@
 use crate::{ast, lexer, token, lexer::Lexer, token::Token, ast::Program};
+use std::collections::HashMap;
+
+const LOWEST: i32       = 1;
+const EQUALS: i32       = 2;
+const LESSGRATER: i32   = 3;
+const SUM: i32          = 4;
+const PRODUCT: i32      = 5;
+const PREFIX: i32       = 6;
+const CALL: i32         = 7;
 
 pub struct Parser {
     l: lexer::Lexer,
@@ -38,7 +47,7 @@ impl Parser {
         match self.curToken.Type {
             token::LET => {return self.parseLetStatement()},
             token::RETURN => {return self.parseReturnStatement()},
-            _ => {return None},
+            _ => {return self.parseExpressionStatement()},
         };
     }
 
@@ -110,5 +119,25 @@ impl Parser {
         }
         Some(stmt)
     }
+
+    fn parseExpressionStatement(&mut self) -> Option<ast::Statement> {
+        let stmt = ast::Statement::ExpressionStatement{Token: self.curToken.clone(), Expression: self.parseExpression(LOWEST)};
+
+        if self.peekTokenIs(token::SEMICOLON) {
+            self.nextToken();
+        }
+
+        Some(stmt)
+    }
+
+    fn parseExpression(&self, precedence: i32) -> ast::Expression {
+        let mut temp = match self.curToken.Type {
+            token::IDENT => ast::Expression::Identifier(ast::Identifier{Token: self.curToken.clone(), Value: self.curToken.Literal.clone()}),
+            _ => ast::Expression::Nil,
+        };
+        temp
+    }
+
+
 }
 

@@ -82,3 +82,33 @@ fn TestReturnStatement() {
     }
 }
 
+#[test]
+fn TestIdentifierExpression() {
+    let input = String::from("foobar;");
+    let l = lexer::New(input);
+    let mut p = l.New();
+    let mut program = p.ParseProgram();
+    p.checkParserErrors();
+    
+    assert_eq!(1, program.Statements.len(), "program has not enough statements. got={}", program.Statements.len());
+
+    let stmt = &program.Statements[0];
+
+    if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
+        if let ast::Expression::Identifier(x) = Expression {
+            if x.Value != String::from("foobar") {
+                println!("x.Value not foobar. got={}", x.Value);
+            }
+            if x.Token.Literal != String::from("foobar") {
+                println!("x.Token.Literal not foobar. got={}", x.Value);
+            }
+        } else {
+            println!("exp not ast::Expression::Identifier. got={}", Expression);
+            panic!();
+        }
+    } else {
+        println!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+        panic!();
+    }
+}
+

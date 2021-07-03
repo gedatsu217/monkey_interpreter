@@ -37,6 +37,7 @@ impl Parser {
     fn parseStatement(&mut self) -> Option<ast::Statement> {
         match self.curToken.Type {
             token::LET => {return self.parseLetStatement()},
+            token::RETURN => {return self.parseReturnStatement()},
             _ => {return None},
         };
     }
@@ -99,6 +100,15 @@ impl Parser {
             println!("{}", error);
         }
         panic!();
+    }
+
+    fn parseReturnStatement(&mut self) -> Option<ast::Statement> {
+        let stmt = ast::Statement::ReturnStatement{Token: self.curToken.clone(), ReturnValue: ast::Expression::Nil};
+        self.nextToken();
+        while !self.curTokenIs(token::SEMICOLON) {
+            self.nextToken();
+        }
+        Some(stmt)
     }
 }
 

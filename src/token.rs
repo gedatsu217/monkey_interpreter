@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 pub type TokenType = &'static str;
+use std::fmt;
 
 
 
@@ -48,6 +49,12 @@ pub struct Token {
 impl Clone for Token {
     fn clone(&self) -> Self {
         Token{Type: self.Type, Literal: self.Literal.clone()}
+    }
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+        write!{f, "Token{{Type: {}, Literal: {}}}", self.Type, self.Literal}
     }
 }
 

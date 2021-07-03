@@ -18,16 +18,8 @@ fn TestLetStatements() {
 
     let program = p.ParseProgram();
     p.checkParserErrors();
-    /*
-    if let None = program {
-        println!("ParseProgram() returned None");
-    }
 
-    let program = program.unwrap();*/
-
-    if program.Statements.len() != 3 {
-        println!("program.Statesments does not contain 3 statements. got={}", program.Statements.len());
-    }
+    assert_eq!(3, program.Statements.len(), "program.Statesments does not contain 3 statements. got={}", program.Statements.len());
     
     let tests = vec![
         ExpectedIdentifiers{expectedIdentifier: String::from("x")},
@@ -39,12 +31,10 @@ fn TestLetStatements() {
         let stmt = &program.Statements[i];
         testLetStatement(stmt, &tt.expectedIdentifier);
     }
-
-    assert_eq!(4, 4);
 }
 
 fn testLetStatement(s: &ast::Statement, name: &String) -> bool{
-    if let ast::Statement::LetStatement{Token, Name, Value} = s {
+    if let ast::Statement::LetStatement{Token, Name, ..} = s {
         if Token.Literal != String::from("let") {
             println!("LetStatement.Token.Literal not 'let'. got={}", Token.Literal);
             return false;
@@ -63,5 +53,32 @@ fn testLetStatement(s: &ast::Statement, name: &String) -> bool{
         return true;
     } 
     false
+}
+
+#[test]
+fn TestReturnStatement() {
+    let input  =String::from("\
+    return 5;
+    return 10;
+    return 993322;
+    ");
+
+    let l = lexer::New(input);
+    let mut p = l.New();
+
+    let program = p.ParseProgram();
+    p.checkParserErrors();
+
+    assert_eq!(3, program.Statements.len(), "program.Statements does not contain 3 statements. got={}", program.Statements.len());
+
+    for stmt in program.Statements.iter() {
+        if let ast::Statement::ReturnStatement{Token, ReturnValue} = stmt {
+            if Token.Literal != String::from("return") {
+                println!("ReturnStatement.Token.Literal not 'return'. got {}", Token.Literal);
+            }
+        } else {
+            println!("stmt not returnStatement. got={}", stmt);
+        }
+    }
 }
 

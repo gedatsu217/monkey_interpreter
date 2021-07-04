@@ -100,7 +100,7 @@ fn TestIdentifierExpression() {
                 println!("x.Value not foobar. got={}", x.Value);
             }
             if x.Token.Literal != String::from("foobar") {
-                println!("x.Token.Literal not foobar. got={}", x.Value);
+                println!("x.Token.Literal not foobar. got={}", x.Token.Literal);
             }
         } else {
             println!("exp not ast::Expression::Identifier. got={}", Expression);
@@ -110,5 +110,37 @@ fn TestIdentifierExpression() {
         println!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
         panic!();
     }
+}
+
+#[test]
+fn TestIntegerLiteralExpression() {
+    let input = String::from("5;");
+    let l = lexer::New(input);
+    let mut p = l.New();
+    let program = p.ParseProgram();
+    p.checkParserErrors();
+
+    assert_eq!(1, program.Statements.len(), "program has not enough statements. got={}", program.Statements.len());
+
+    let stmt = &program.Statements[0];
+
+    if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
+        if let ast::Expression::IntergerLiteral{Token, Value} = Expression {
+            if *Value != 5 {
+                println!("Value not foobar. got={}", Value);
+            }
+            if Token.Literal != String::from("5") {
+                println!("Token.Literal not 5. got={}", Token.Literal);
+            }
+        } else {
+            println!("exp not ast::Expression::IntegerLiteral. got={}", Expression);
+            panic!();
+        }
+    } else {
+        println!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+        panic!();
+    }
+
+
 }
 

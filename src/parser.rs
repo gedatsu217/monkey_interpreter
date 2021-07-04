@@ -121,7 +121,10 @@ impl Parser {
     }
 
     fn parseExpressionStatement(&mut self) -> Option<ast::Statement> {
-        let stmt = ast::Statement::ExpressionStatement{Token: self.curToken.clone(), Expression: self.parseExpression(LOWEST)};
+        let res = self.parseExpression(LOWEST);
+        if let ast::Expression::Nil = res {return None;}
+
+        let stmt = ast::Statement::ExpressionStatement{Token: self.curToken.clone(), Expression: res};
 
         if self.peekTokenIs(token::SEMICOLON) {
             self.nextToken();
@@ -130,14 +133,27 @@ impl Parser {
         Some(stmt)
     }
 
-    fn parseExpression(&self, precedence: i32) -> ast::Expression {
+    fn parseExpression(&mut self, precedence: i32) -> ast::Expression {
         let mut temp = match self.curToken.Type {
             token::IDENT => ast::Expression::Identifier(ast::Identifier{Token: self.curToken.clone(), Value: self.curToken.Literal.clone()}),
+            token::INT => self.parseIntergerLiteral(),
             _ => ast::Expression::Nil,
         };
         temp
     }
 
+    fn parseIntergerLiteral(&mut self) -> ast::Expression {
+        let value = self.curToken.Literal.parse();
+
+        match value {
+            Err(_) => {
+                let msg = format!("could not parse {} as integer", self.curToken.Literal);
+                self.errors.push(msg);
+                ast::Expression::Nil
+            },
+            Ok(v) => ast::Expression::IntergerLiteral{Token: self.curToken.clone(), Value: v}
+        }
+    }
 
 }
 

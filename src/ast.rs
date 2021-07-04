@@ -30,6 +30,8 @@ impl fmt::Display for Identifier {
 pub enum Expression {
     Nil,
     Identifier(Identifier),
+    IntergerLiteral{Token: token::Token, Value: i64},
+
 
 }
 

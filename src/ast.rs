@@ -31,6 +31,7 @@ pub enum Expression {
     Nil,
     Identifier(Identifier),
     IntergerLiteral{Token: token::Token, Value: i64},
+    PrefixExpression{Token: token::Token, Operator: String, Right: Box<Expression>},
 
 
 }

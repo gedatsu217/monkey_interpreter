@@ -140,7 +140,64 @@ fn TestIntegerLiteralExpression() {
         println!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
         panic!();
     }
+}
 
+#[test]
+fn TestParsingPrefixExpression() {
+    struct prefixTests_struct {
+        input: String,
+        operator: String,
+        integerValue: i64,
+    }
 
+    let prefixTests = vec![
+        prefixTests_struct{input: String::from("!5;"), operator: String::from("!"), integerValue: 5},
+        prefixTests_struct{input: String::from("-15;"), operator: String::from("-"), integerValue: 15},
+    ];
+
+    for tt in prefixTests.iter() {
+        let l = lexer::New(tt.input.clone());
+        let mut p = l.New();
+        let program = p.ParseProgram();
+        p.checkParserErrors();
+
+        assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+
+        let stmt = &program.Statements[0];
+        if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
+            if let ast::Expression::PrefixExpression{Token, Operator, Right} = Expression {
+                if *Operator != tt.operator {
+                    panic!("Operator is not {}. got={}", tt.operator, Operator);
+                }
+                if !testIntegerLiteral(Right.as_ref(), tt.integerValue) {
+                    return
+                }
+            } else {
+                println!("stmt is not ast::Expression::PrefixExpression. got={}", Expression);
+                panic!();
+            }
+        } else {
+            println!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+            panic!();
+        }
+    }
+
+}
+
+fn testIntegerLiteral(il: &ast::Expression, value: i64) -> bool {
+    if let ast::Expression::IntergerLiteral{Token, Value} = il {
+        if *Value != value {
+            if Token.Literal != value.to_string() {
+                return true;
+            } else {
+                println!("Token.Literal not {}. got={}", value, Token.Literal);
+            }
+        } else {
+            println!("Value not {}. got={}", value, Value);
+        }
+    } else {
+        println!("il not ast::Expression::IntegerLiteral. got={}", il);
+    }
+    false
 }
 

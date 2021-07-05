@@ -134,12 +134,17 @@ impl Parser {
     }
 
     fn parseExpression(&mut self, precedence: i32) -> ast::Expression {
-        let mut temp = match self.curToken.Type {
+        let mut res = match self.curToken.Type {
             token::IDENT => ast::Expression::Identifier(ast::Identifier{Token: self.curToken.clone(), Value: self.curToken.Literal.clone()}),
             token::INT => self.parseIntergerLiteral(),
-            _ => ast::Expression::Nil,
+            token::BANG => self.parsePrefixExpression(),
+            token::MINUS => self.parsePrefixExpression(),
+            _ => {
+                let msg = format!("no prefix parse function for {} found", self.curToken.Type);
+                ast::Expression::Nil
+            },
         };
-        temp
+        res
     }
 
     fn parseIntergerLiteral(&mut self) -> ast::Expression {
@@ -153,6 +158,13 @@ impl Parser {
             },
             Ok(v) => ast::Expression::IntergerLiteral{Token: self.curToken.clone(), Value: v}
         }
+    }
+
+    fn parsePrefixExpression(&mut self) -> ast::Expression {
+        let token_temp = self.curToken.clone();
+        let ope_temp = self.curToken.Literal.clone();
+        self.nextToken();
+        ast::Expression::PrefixExpression{Token: token_temp, Operator: ope_temp, Right: Box::new(ast::Expression::Nil)}
     }
 
 }

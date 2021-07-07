@@ -79,11 +79,11 @@ impl Lexer {
             Some(s) if s == gt_str => {tok = newToken(token::GT, &self.ch);},
             None => {tok = newToken(token::EOF, &Some(String::from("")))},
             _ => {
-                if isLetter(self.ch.as_ref().unwrap()) {
+                if isLetter(&self.ch) {
                     let literal = self.readIdentifier();
                     tok = newToken(token::LookupIdent(&literal), &Some(literal));
                     return tok
-                } else if isDigit(self.ch.as_ref().unwrap()){
+                } else if isDigit(&self.ch){
                     tok = newToken(token::INT, &Some(self.readNumber()));
                     return tok
                 } else {
@@ -99,7 +99,7 @@ impl Lexer {
 
     fn readIdentifier(&mut self) -> String {
         let mut res = String::from("");
-        while isLetter(self.ch.as_ref().unwrap()) {
+        while isLetter(&self.ch) {
             res += self.ch.as_ref().unwrap();
             self.readChar();
         }
@@ -108,7 +108,7 @@ impl Lexer {
 
     fn readNumber(&mut self) -> String {
         let mut res = String::from("");
-        while isDigit(self.ch.as_ref().unwrap()) {
+        while isDigit(&self.ch) {
             res += self.ch.as_ref().unwrap();
             self.readChar();
         }
@@ -134,16 +134,24 @@ pub fn newToken(tokenType: token::TokenType, ch: &Option<String>) -> Token{
     Token{Type: tokenType, Literal: ch.clone().unwrap()}
 }
 
-fn isLetter(s: &String) -> bool {
-    let ch = s.clone().into_bytes()[0];
-    // alphabet(a-z, A-Z) or _
-    return (97 <= ch && ch <= 122) || (65 <= ch && ch <= 90) || ch == 95
+fn isLetter(s: &Option<String>) -> bool {
+    if let Some(ss) = s {
+        let ch = ss.clone().into_bytes()[0];
+        // alphabet(a-z, A-Z) or _
+        (97 <= ch && ch <= 122) || (65 <= ch && ch <= 90) || ch == 95
+    } else {
+        false
+    }
 }
 
-fn isDigit(s: &String) -> bool {
-    let ch = s.clone().into_bytes()[0];
-    // 0-9
-    return 48 <= ch && ch <= 57
+fn isDigit(s: &Option<String>) -> bool {
+    if let Some(ss) = s {
+        let ch = ss.clone().into_bytes()[0];
+        // 0-9
+        48 <= ch && ch <= 57
+    } else {
+        false
+    }
 }
 
 

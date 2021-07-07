@@ -16,6 +16,16 @@ impl fmt::Display for Statement {
     }
 }
 
+impl Statement {
+    pub fn into_string(&self) -> String {
+        match self {
+            Statement::LetStatement{..} => {"".to_string()},
+            Statement::ReturnStatement{..} => {"".to_string()},
+            Statement::ExpressionStatement{Token, Expression} => {Expression.into_string()}
+        }
+    }
+}
+
 pub struct Identifier {
     pub Token: token::Token,
     pub Value: String,
@@ -32,8 +42,20 @@ pub enum Expression {
     Identifier(Identifier),
     IntergerLiteral{Token: token::Token, Value: i64},
     PrefixExpression{Token: token::Token, Operator: String, Right: Box<Expression>},
+    InfixExpression{Token: token::Token, Left: Box<Expression>, Operator: String, Right: Box<Expression>}
 
+}
 
+impl Expression {
+    pub fn into_string(&self) -> String{
+        match self {
+            Expression::Nil => {String::from("")},
+            Expression::Identifier(Identifier) => {Identifier.Value.clone()},
+            Expression::IntergerLiteral{Token ,Value} => {Token.Literal.clone()},
+            Expression::PrefixExpression{Token, Operator, Right} => {String::from("(") + Operator + Right.into_string().as_str() + ")"},
+            Expression::InfixExpression{Token, Left, Operator, Right} => {String::from("(") + Left.into_string().as_str() + " " + Operator + " " + Right.into_string().as_str() + ")"},
+        }
+    }
 }
 
 impl fmt::Display for Expression {
@@ -44,5 +66,15 @@ impl fmt::Display for Expression {
 
 pub struct Program {
     pub Statements: Vec<Statement>,
+}
+
+impl Program {
+    pub fn into_string(&self) -> String {
+        let mut res = "".to_string();
+        for s in self.Statements.iter() {
+            res += &s.into_string();
+        }
+        res
+    } 
 }
 

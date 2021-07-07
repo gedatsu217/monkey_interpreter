@@ -1,5 +1,6 @@
 use crate::{ast, lexer, token, lexer::Lexer, token::Token, ast::Program};
 use std::collections::HashMap;
+use phf::phf_map;
 
 const LOWEST: i32       = 1;
 const EQUALS: i32       = 2;
@@ -8,6 +9,17 @@ const SUM: i32          = 4;
 const PRODUCT: i32      = 5;
 const PREFIX: i32       = 6;
 const CALL: i32         = 7;
+
+static precedences: phf::Map<&'static str, i32> = phf_map! {
+    "==" => EQUALS,
+    "!=" => EQUALS,
+    "<" => LESSGRATER,
+    ">" => LESSGRATER,
+    "+" => SUM,
+    "-" => SUM,
+    "/" => PRODUCT,
+    "*" => PRODUCT,
+};
 
 pub struct Parser {
     l: lexer::Lexer,
@@ -134,17 +146,34 @@ impl Parser {
     }
 
     fn parseExpression(&mut self, precedence: i32) -> ast::Expression {
-        let mut res = match self.curToken.Type {
+        let mut left = match self.curToken.Type {
             token::IDENT => ast::Expression::Identifier(ast::Identifier{Token: self.curToken.clone(), Value: self.curToken.Literal.clone()}),
             token::INT => self.parseIntergerLiteral(),
             token::BANG => self.parsePrefixExpression(),
             token::MINUS => self.parsePrefixExpression(),
             _ => {
                 let msg = format!("no prefix parse function for {} found", self.curToken.Type);
+                self.errors.push(msg);
                 ast::Expression::Nil
             },
         };
-        res
+
+        while !self.peekTokenIs(token::SEMICOLON) && precedence < self.peekPrecedence() {
+            println!("{}", self.peekToken);
+            match self.peekToken.Type {
+                token::PLUS => {self.nextToken(); left = self.parseInfixExpression(left);},
+                token::MINUS => {self.nextToken(); left = self.parseInfixExpression(left);},
+                token::SLASH => {self.nextToken(); left = self.parseInfixExpression(left);},
+                token::ASTERISK => {self.nextToken(); left = self.parseInfixExpression(left);},
+                token::EQ => {self.nextToken(); left = self.parseInfixExpression(left);},
+                token::NOT_EQ => {self.nextToken(); left = self.parseInfixExpression(left);},
+                token::LT => {self.nextToken(); left = self.parseInfixExpression(left);},
+                token::GT => {self.nextToken(); left = self.parseInfixExpression(left);},
+                _ => {},
+            }
+        }
+        
+        left
     }
 
     fn parseIntergerLiteral(&mut self) -> ast::Expression {
@@ -165,6 +194,30 @@ impl Parser {
         let ope_temp = self.curToken.Literal.clone();
         self.nextToken();
         ast::Expression::PrefixExpression{Token: token_temp, Operator: ope_temp, Right: Box::new(ast::Expression::Nil)}
+    }
+
+    fn peekPrecedence(&self) -> i32 {
+        let p = precedences.get(self.peekToken.Type);
+        match p {
+            Some(x) => *x,
+            None => LOWEST
+        }
+    }
+
+    fn curPrecedence(&self) -> i32 {
+        let p = precedences.get(self.curToken.Type);
+        match p {
+            Some(x) => *x,
+            None => LOWEST
+        }
+    }
+
+    fn parseInfixExpression(&mut self, left: ast::Expression) -> ast::Expression {
+        let token_temp = self.curToken.clone();
+        let ope_temp = self.curToken.Literal.clone();
+        let precedence = self.curPrecedence();
+        self.nextToken();
+        ast::Expression::InfixExpression{Token: token_temp, Operator: ope_temp, Left: Box::new(left), Right: Box::new(self.parseExpression(precedence))}
     }
 
 }

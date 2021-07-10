@@ -193,7 +193,7 @@ impl Parser {
         let token_temp = self.curToken.clone();
         let ope_temp = self.curToken.Literal.clone();
         self.nextToken();
-        ast::Expression::PrefixExpression{Token: token_temp, Operator: ope_temp, Right: Box::new(ast::Expression::Nil)}
+        ast::Expression::PrefixExpression{Token: token_temp, Operator: ope_temp, Right: Box::new(self.parseExpression(PREFIX))}
     }
 
     fn peekPrecedence(&self) -> i32 {

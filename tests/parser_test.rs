@@ -1,5 +1,5 @@
 extern crate monkey_interpreter;
-use monkey_interpreter::{ast, lexer, parser};
+use monkey_interpreter::{ast, lexer, parser, token, token::Token};
 
 struct ExpectedIdentifiers {
     expectedIdentifier: String,
@@ -13,23 +13,40 @@ fn TestLetStatements() {
     let foobar = 838383;
     ");
 
-    let l = lexer::New(input);
-    let mut p = l.New();
+    struct tests_struct {
+        input: String,
+        expectedIdentifier: String,
+        expectedValue: ast::Expression,
+    }
 
-    let program = p.ParseProgram();
-    p.checkParserErrors();
-
-    assert_eq!(3, program.Statements.len(), "program.Statesments does not contain 3 statements. got={}", program.Statements.len());
-    
     let tests = vec![
-        ExpectedIdentifiers{expectedIdentifier: String::from("x")},
-        ExpectedIdentifiers{expectedIdentifier: String::from("y")},
-        ExpectedIdentifiers{expectedIdentifier: String::from("foobar")},
+        tests_struct{input: String::from("let x = 5;"), expectedIdentifier: String::from("x"), expectedValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5 as i64}},
+        //tests_struct{input: String::from("let y = true;"), expectedIdentifier: String::from("y"), expectedValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: String::from("true")})},
+        tests_struct{input: String::from("let foobar = y;"), expectedIdentifier: String::from("foobar"), expectedValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("y")}, Value: String::from("y")})},
     ];
 
-    for (i, tt) in tests.iter().enumerate() {
-        let stmt = &program.Statements[i];
-        testLetStatement(stmt, &tt.expectedIdentifier);
+    for tt in tests.iter() {
+        let l = lexer::New(tt.input.clone());
+        let mut p = l.New();
+
+        let program = p.ParseProgram();
+        p.checkParserErrors();
+
+        assert_eq!(1, program.Statements.len(), "program.Statesments does not contain 1 statements. got={}", program.Statements.len());
+
+        let stmt = &program.Statements[0];
+        if !testLetStatement(stmt, &tt.expectedIdentifier) {
+            panic!("stmt not expected");
+        }
+        println!("{}", stmt);
+        if let ast::Statement::LetStatement{Token, Name, Value} = stmt {
+            if !testLiteralExpression(Value, &tt.expectedValue) {
+                panic!("Value not expected");
+            }
+        } else {
+            panic!("stmt not ast::Statement::LetStatement");
+        }
+
     }
 }
 
@@ -285,6 +302,58 @@ fn TestOperatorPrecedenceParsing() {
             println!("expected={}, got={}", tt.expected, actual);
         }
 
+    }
+}
+
+fn testIdentifier(exp: &ast::Expression, value: String) -> bool {
+    if let ast::Expression::Identifier(x) = exp {
+        if x.Value == value {
+            if x.Token.Literal == value {
+                true
+            } else {
+                println!("x.Token.Literal not {}. got={}", value, x.Token.Literal);
+                false
+            } 
+        } else {
+            println!("x.Value not {}. got={}", value, x.Value);
+            false
+        }
+    } else {
+        println!("exp not ast::Expression::Identifier. got={}", exp);
+        false
+    }
+}
+
+fn testLiteralExpression(exp: &ast::Expression, expected: &ast::Expression) -> bool {
+    match expected {
+        ast::Expression::IntergerLiteral{Token, Value} => testIntegerLiteral(&exp, *Value),
+        ast::Expression::Identifier(x) => testIdentifier(exp, x.Value.clone()),
+        _ => {
+            println!("type of exp not handled. got={}", exp);
+            false
+        }
+    }
+}
+
+fn testInfixExpression(exp: &ast::Expression, left: &ast::Expression, operator: String, right: &ast::Expression) -> bool {
+    if let ast::Expression::InfixExpression{Token, Left, Operator, Right} = exp {
+        if !testLiteralExpression(Left, left) {
+            return false
+        }
+
+        if *Operator != operator {
+            println!("Operator is not {}. got={}", operator, Operator);
+            return false
+        }
+
+        if !testLiteralExpression(Right, right) {
+            return false
+        }
+
+        true 
+    } else {
+        println!("exp is not ast::Expression::InfixExpression. got={}", exp);
+        false
     }
 }
 

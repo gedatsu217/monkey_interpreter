@@ -64,18 +64,20 @@ impl Parser {
     }
 
     fn parseLetStatement(&mut self) -> Option<ast::Statement> {
-        //let stmt = ast::Statement::LetStatement{Token: self.curToken.clone(), Name: ast::Identifier{Token: token::Token{Type: token::ILLEGAL, Literal: String::from("")}, Value: String::from("")}, Value: ast::Expression::Nil};
-
+        let temp_token = self.curToken.clone();
         if !self.expectPeek(token::IDENT) {
             return None;
         }
 
-        let stmt = ast::Statement::LetStatement{Token: self.curToken.clone(), Name: ast::Identifier{Token: self.curToken.clone(), Value: self.curToken.Literal.clone()}, Value: ast::Expression::Nil};
-
+        let temp_name = ast::Identifier{Token: self.curToken.clone(), Value: self.curToken.Literal.clone()};
 
         if !self.expectPeek(token::ASSIGN) {
             return None;
         }
+
+        self.nextToken();
+
+        let stmt = ast::Statement::LetStatement{Token: temp_token, Name: temp_name, Value: self.parseExpression(LOWEST)};
 
         while !self.curTokenIs(token::SEMICOLON) {
             self.nextToken();

@@ -154,6 +154,8 @@ impl Parser {
             token::INT => self.parseIntergerLiteral(),
             token::BANG => self.parsePrefixExpression(),
             token::MINUS => self.parsePrefixExpression(),
+            token::TRUE => self.parseBoolean(),
+            token::FALSE => self.parseBoolean(),
             _ => {
                 let msg = format!("no prefix parse function for {} found", self.curToken.Type);
                 self.errors.push(msg);
@@ -221,6 +223,10 @@ impl Parser {
         let precedence = self.curPrecedence();
         self.nextToken();
         ast::Expression::InfixExpression{Token: token_temp, Operator: ope_temp, Left: Box::new(left), Right: Box::new(self.parseExpression(precedence))}
+    }
+
+    fn parseBoolean(&self) -> ast::Expression {
+        ast::Expression::Boolean{Token: self.curToken.clone(), Value: self.curTokenIs(token::TRUE)}
     }
 
 }

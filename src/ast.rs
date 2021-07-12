@@ -42,7 +42,8 @@ pub enum Expression {
     Identifier(Identifier),
     IntergerLiteral{Token: token::Token, Value: i64},
     PrefixExpression{Token: token::Token, Operator: String, Right: Box<Expression>},
-    InfixExpression{Token: token::Token, Left: Box<Expression>, Operator: String, Right: Box<Expression>}
+    InfixExpression{Token: token::Token, Left: Box<Expression>, Operator: String, Right: Box<Expression>},
+    Boolean{Token: token::Token, Value: bool},
 
 }
 
@@ -54,6 +55,7 @@ impl Expression {
             Expression::IntergerLiteral{Token ,Value} => {Token.Literal.clone()},
             Expression::PrefixExpression{Token, Operator, Right} => {String::from("(") + Operator + Right.into_string().as_str() + ")"},
             Expression::InfixExpression{Token, Left, Operator, Right} => {String::from("(") + Left.into_string().as_str() + " " + Operator + " " + Right.into_string().as_str() + ")"},
+            Expression::Boolean{Token, Value} => {Token.Literal.clone()},
         }
     }
 }

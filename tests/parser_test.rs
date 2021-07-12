@@ -355,3 +355,41 @@ fn testInfixExpression(exp: &ast::Expression, left: &ast::Expression, operator: 
     }
 }
 
+#[test]
+fn TestBooleanExpression() {
+    struct tests_struct {
+        input: String,
+        expectedBoolean: bool,
+    }
+
+    let tests = vec![
+        tests_struct{input: String::from("true;"), expectedBoolean: true},
+        tests_struct{input: String::from("false;"), expectedBoolean: false},
+    ];
+
+    for tt in tests.iter() {
+        let l = lexer::New(tt.input.clone());
+        let mut p = l.New();
+    
+        let program = p.ParseProgram();
+        p.checkParserErrors();
+    
+        assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+
+        let stmt = &program.Statements[0];
+
+        if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {    
+            if let ast::Expression::Boolean{Token, Value} = Expression {
+                assert_eq!(Value, &tt.expectedBoolean);
+            } else {
+                panic!("Expression not Boolean. got={}", Expression)
+            }
+        } else {
+            panic!("stmt not ast::Statement::ExpressionStatement. got={}", stmt);
+        }
+
+
+    }
+
+}
+

@@ -74,28 +74,36 @@ fn testLetStatement(s: &ast::Statement, name: &String) -> bool{
 
 #[test]
 fn TestReturnStatement() {
-    let input  =String::from("\
-    return 5;
-    return 10;
-    return 993322;
-    ");
+    struct tests_struct {
+        input: String,
+        expectedValue: ast::Expression,
+    }
 
-    let l = lexer::New(input);
-    let mut p = l.New();
+    let tests = vec![
+        tests_struct{input: String::from("return 5;"), expectedValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        //tests_struct{input: String::from("return true;"), expectedValue: ast::Expression::},
+        tests_struct{input: String::from("return foobar;"), expectedValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")})},
+    ];
 
-    let program = p.ParseProgram();
-    p.checkParserErrors();
+    for tt in tests.iter() {
+        let l = lexer::New(tt.input.clone());
+        let mut p = l.New();
+    
+        let program = p.ParseProgram();
+        p.checkParserErrors();
+    
+        assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
 
-    assert_eq!(3, program.Statements.len(), "program.Statements does not contain 3 statements. got={}", program.Statements.len());
+        let stmt = &program.Statements[0];
 
-    for stmt in program.Statements.iter() {
-        if let ast::Statement::ReturnStatement{Token, ReturnValue} = stmt {
-            if Token.Literal != String::from("return") {
-                println!("ReturnStatement.Token.Literal not 'return'. got {}", Token.Literal);
-            }
+        if let ast::Statement::ReturnStatement{Token, ReturnValue} = stmt {    
+            assert_eq!(Token.Literal, String::from("return"), "Token.Literal not return. got={}", Token.Literal);
+            assert_eq!(testLiteralExpression(ReturnValue, &tt.expectedValue), true);
         } else {
-            println!("stmt not returnStatement. got={}", stmt);
+            panic!("stmt not returnStatement. got={}", stmt);
         }
+
+
     }
 }
 

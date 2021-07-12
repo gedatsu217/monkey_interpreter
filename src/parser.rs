@@ -126,8 +126,9 @@ impl Parser {
     }
 
     fn parseReturnStatement(&mut self) -> Option<ast::Statement> {
-        let stmt = ast::Statement::ReturnStatement{Token: self.curToken.clone(), ReturnValue: ast::Expression::Nil};
+        let token_temp = self.curToken.clone();
         self.nextToken();
+        let stmt = ast::Statement::ReturnStatement{Token: token_temp, ReturnValue: self.parseExpression(LOWEST)};
         while !self.curTokenIs(token::SEMICOLON) {
             self.nextToken();
         }

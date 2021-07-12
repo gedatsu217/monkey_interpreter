@@ -172,12 +172,15 @@ fn TestParsingPrefixExpression() {
     struct prefixTests_struct {
         input: String,
         operator: String,
-        integerValue: i64,
+        value: ast::Expression,
     }
 
     let prefixTests = vec![
-        prefixTests_struct{input: String::from("!5;"), operator: String::from("!"), integerValue: 5},
-        prefixTests_struct{input: String::from("-15;"), operator: String::from("-"), integerValue: 15},
+        prefixTests_struct{input: String::from("!5;"), operator: String::from("!"), value: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        prefixTests_struct{input: String::from("-15;"), operator: String::from("-"), value: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("15")}, Value: 15}},
+        prefixTests_struct{input: String::from("!foobar;"), operator: String::from("!"), value: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")})},
+        prefixTests_struct{input: String::from("-foobar;"), operator: String::from("-"), value: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")})},
+
     ];
 
     for tt in prefixTests.iter() {
@@ -191,19 +194,13 @@ fn TestParsingPrefixExpression() {
         let stmt = &program.Statements[0];
         if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
             if let ast::Expression::PrefixExpression{Token, Operator, Right} = Expression {
-                if *Operator != tt.operator {
-                    panic!("Operator is not {}. got={}", tt.operator, Operator);
-                }
-                if !testIntegerLiteral(Right, tt.integerValue) {
-                    return
-                }
+                assert_eq!(*Operator, tt.operator, "Operator is not {}. got={}", tt.operator, Operator);
+                assert_eq!(testLiteralExpression(Right, &tt.value), true);
             } else {
-                println!("stmt is not ast::Expression::PrefixExpression. got={}", Expression);
-                panic!();
+                panic!("stmt is not ast::Expression::PrefixExpression. got={}", Expression);
             }
         } else {
-            println!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
-            panic!();
+            panic!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
         }
     }
 

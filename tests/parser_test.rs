@@ -15,7 +15,7 @@ fn TestLetStatements() {
 
     let tests = vec![
         tests_struct{input: String::from("let x = 5;"), expectedIdentifier: String::from("x"), expectedValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5 as i64}},
-        //tests_struct{input: String::from("let y = true;"), expectedIdentifier: String::from("y"), expectedValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: String::from("true")})},
+        tests_struct{input: String::from("let y = true;"), expectedIdentifier: String::from("y"), expectedValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}},
         tests_struct{input: String::from("let foobar = y;"), expectedIdentifier: String::from("foobar"), expectedValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("y")}, Value: String::from("y")})},
     ];
 
@@ -75,7 +75,7 @@ fn TestReturnStatement() {
 
     let tests = vec![
         tests_struct{input: String::from("return 5;"), expectedValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        //tests_struct{input: String::from("return true;"), expectedValue: ast::Expression::},
+        tests_struct{input: String::from("return true;"), expectedValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}},
         tests_struct{input: String::from("return foobar;"), expectedValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")})},
     ];
 
@@ -174,7 +174,8 @@ fn TestParsingPrefixExpression() {
         prefixTests_struct{input: String::from("-15;"), operator: String::from("-"), value: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("15")}, Value: 15}},
         prefixTests_struct{input: String::from("!foobar;"), operator: String::from("!"), value: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")})},
         prefixTests_struct{input: String::from("-foobar;"), operator: String::from("-"), value: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")})},
-
+        prefixTests_struct{input: String::from("!true"), operator: String::from("!"), value: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}},
+        prefixTests_struct{input: String::from("!false"), operator: String::from("!"), value: ast::Expression::Boolean{Token: Token{Type: token::FALSE, Literal: String::from("false")}, Value: false}},
     ];
 
     for tt in prefixTests.iter() {
@@ -242,7 +243,9 @@ fn TestParsingInfixExpressions() {
         infixTests_struct{input: String::from("foobar < barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("<"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
         infixTests_struct{input: String::from("foobar == barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("=="), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
         infixTests_struct{input: String::from("foobar != barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("!="), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
-
+        infixTests_struct{input: String::from("true == true"), leftValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}, operator: String::from("=="), rightValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}},
+        infixTests_struct{input: String::from("true != false"), leftValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}, operator: String::from("!="), rightValue: ast::Expression::Boolean{Token: Token{Type: token::FALSE, Literal: String::from("false")}, Value: false}},
+        infixTests_struct{input: String::from("false == false"), leftValue: ast::Expression::Boolean{Token: Token{Type: token::FALSE, Literal: String::from("false")}, Value: false}, operator: String::from("=="), rightValue: ast::Expression::Boolean{Token: Token{Type: token::FALSE, Literal: String::from("false")}, Value: false}},
     ];
 
     for tt in infixTests.iter() {
@@ -287,6 +290,10 @@ fn TestOperatorPrecedenceParsing() {
         tests_struct{input: String::from("5 > 4 == 3 < 4"), expected: String::from("((5 > 4) == (3 < 4))")},
         tests_struct{input: String::from("5 < 4 != 3 > 4"), expected: String::from("((5 < 4) != (3 > 4))")},
         tests_struct{input: String::from("3 + 4 * 5 == 3 * 1 + 4 * 5"), expected: String::from("((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")},
+        tests_struct{input: String::from("true"), expected: String::from("true")},
+        tests_struct{input: String::from("false"), expected: String::from("false")},
+        tests_struct{input: String::from("3 > 5 == false"), expected: String::from("((3 > 5) == false)")},
+        tests_struct{input: String::from("3 < 5 == true"), expected: String::from("((3 < 5) == true)")},
     ];
 
     for tt in tests.iter() {
@@ -326,6 +333,7 @@ fn testLiteralExpression(exp: &ast::Expression, expected: &ast::Expression) -> b
     match expected {
         ast::Expression::IntergerLiteral{Token, Value} => testIntegerLiteral(&exp, *Value),
         ast::Expression::Identifier(x) => testIdentifier(exp, x.Value.clone()),
+        ast::Expression::Boolean{Token, Value} => testBooleanLiteral(exp, *Value),
         _ => {
             println!("type of exp not handled. got={}", exp);
             false
@@ -391,5 +399,23 @@ fn TestBooleanExpression() {
 
     }
 
+}
+
+fn testBooleanLiteral(exp: &ast::Expression, value: bool) -> bool {
+    if let ast::Expression::Boolean{Token, Value} = exp {
+        if Value != &value {
+            println!("Value not {}. got={}", value, Value);
+            return false
+        }
+        if Token.Literal != format!("{}", value) {
+            println!("Token.Literal not {}. got={}", value, Token.Literal);
+            return false
+        }
+
+        true
+    } else {
+        println!("exp not ast::Expression::Boolean. got={}", exp);
+        false
+    }
 }
 

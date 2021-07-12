@@ -7,12 +7,6 @@ struct ExpectedIdentifiers {
 
 #[test]
 fn TestLetStatements() {
-    let input = String::from("\
-    let x = 5;
-    let y = 10;
-    let foobar = 838383;
-    ");
-
     struct tests_struct {
         input: String,
         expectedIdentifier: String,
@@ -227,19 +221,28 @@ fn testIntegerLiteral(il: &ast::Expression, value: i64) -> bool {
 fn TestParsingInfixExpressions() {
     struct infixTests_struct {
         input: String,
-        leftValue: i64,
+        leftValue: ast::Expression,
         operator: String,
-        rightValue: i64,
+        rightValue: ast::Expression,
     }
     let infixTests = vec![
-        infixTests_struct{input: String::from("5 + 5;"), leftValue: 5, operator: String::from("+"), rightValue: 5},
-        infixTests_struct{input: String::from("5 - 5;"), leftValue: 5, operator: String::from("-"), rightValue: 5},
-        infixTests_struct{input: String::from("5 * 5;"), leftValue: 5, operator: String::from("*"), rightValue: 5},
-        infixTests_struct{input: String::from("5 / 5;"), leftValue: 5, operator: String::from("/"), rightValue: 5},
-        infixTests_struct{input: String::from("5 > 5;"), leftValue: 5, operator: String::from(">"), rightValue: 5},
-        infixTests_struct{input: String::from("5 < 5;"), leftValue: 5, operator: String::from("<"), rightValue: 5},
-        infixTests_struct{input: String::from("5 == 5;"), leftValue: 5, operator: String::from("=="), rightValue: 5},
-        infixTests_struct{input: String::from("5 != 5;"), leftValue: 5, operator: String::from("!="), rightValue: 5},
+        infixTests_struct{input: String::from("5 + 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("+"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        infixTests_struct{input: String::from("5 - 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("-"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        infixTests_struct{input: String::from("5 * 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("*"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        infixTests_struct{input: String::from("5 / 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("/"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        infixTests_struct{input: String::from("5 > 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from(">"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        infixTests_struct{input: String::from("5 < 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("<"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        infixTests_struct{input: String::from("5 == 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("=="), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        infixTests_struct{input: String::from("5 != 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("!="), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
+        infixTests_struct{input: String::from("foobar + barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("+"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
+        infixTests_struct{input: String::from("foobar - barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("-"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
+        infixTests_struct{input: String::from("foobar * barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("*"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
+        infixTests_struct{input: String::from("foobar / barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("/"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
+        infixTests_struct{input: String::from("foobar > barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from(">"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
+        infixTests_struct{input: String::from("foobar < barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("<"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
+        infixTests_struct{input: String::from("foobar == barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("=="), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
+        infixTests_struct{input: String::from("foobar != barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("!="), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
+
     ];
 
     for tt in infixTests.iter() {
@@ -254,17 +257,7 @@ fn TestParsingInfixExpressions() {
 
         if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
             if let ast::Expression::InfixExpression{Token, Left, Operator, Right} = Expression {
-                if !testIntegerLiteral(Left, tt.leftValue) {
-                    return
-                }
-
-                if *Operator != tt.operator {
-                    panic!("Operator is not {}. got={}", tt.operator, Operator);
-                }
-
-                if !testIntegerLiteral(Right, tt.rightValue) {
-                    return
-                }
+                assert_eq!(testInfixExpression(Expression, Left, Operator.clone(), Right), true);
             } else {
                 panic!("Expression is not ast::Expression::InfixExpression. got={}", Expression);
             }

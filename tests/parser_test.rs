@@ -294,6 +294,11 @@ fn TestOperatorPrecedenceParsing() {
         tests_struct{input: String::from("false"), expected: String::from("false")},
         tests_struct{input: String::from("3 > 5 == false"), expected: String::from("((3 > 5) == false)")},
         tests_struct{input: String::from("3 < 5 == true"), expected: String::from("((3 < 5) == true)")},
+        tests_struct{input: String::from("1 + (2 + 3) + 4"), expected: String::from("((1 + (2 + 3)) + 4)")},
+        tests_struct{input: String::from("(5 + 5) * 2"), expected: String::from("((5 + 5) * 2)")},
+        tests_struct{input: String::from("2 / (5 + 5)"), expected: String::from("(2 / (5 + 5))")},
+        tests_struct{input: String::from("-(5 + 5)"), expected: String::from("(-(5 + 5))")},
+        tests_struct{input: String::from("!(true == true)"), expected: String::from("(!(true == true))")},
     ];
 
     for tt in tests.iter() {

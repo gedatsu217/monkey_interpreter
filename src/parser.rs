@@ -156,6 +156,7 @@ impl Parser {
             token::MINUS => self.parsePrefixExpression(),
             token::TRUE => self.parseBoolean(),
             token::FALSE => self.parseBoolean(),
+            token::LPAREN => self.parseGroupedExpression(),
             _ => {
                 let msg = format!("no prefix parse function for {} found", self.curToken.Type);
                 self.errors.push(msg);
@@ -227,6 +228,17 @@ impl Parser {
 
     fn parseBoolean(&self) -> ast::Expression {
         ast::Expression::Boolean{Token: self.curToken.clone(), Value: self.curTokenIs(token::TRUE)}
+    }
+
+    fn parseGroupedExpression(&mut self) -> ast::Expression {
+        self.nextToken();
+        let exp = self.parseExpression(LOWEST);
+
+        if !self.expectPeek(token::RPAREN) {
+            return ast::Expression::Nil
+        }
+
+        exp
     }
 
 }

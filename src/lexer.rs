@@ -9,7 +9,12 @@ pub struct Lexer {
 }
 
 pub fn New(input: String) -> Lexer {
-    let mut l = Lexer{input, position: 0, readPosition: 0, ch: Some(String::from(""))};
+    let mut l = Lexer {
+        input,
+        position: 0,
+        readPosition: 0,
+        ch: Some(String::from("")),
+    };
     l.readChar();
     l
 }
@@ -20,14 +25,19 @@ impl Lexer {
             self.ch = None;
         } else {
             //self.ch = String::from(&self.input[self.readPosition..2]);
-            self.ch = Some(self.input.chars().nth(self.readPosition as usize).unwrap().to_string());
+            self.ch = Some(
+                self.input
+                    .chars()
+                    .nth(self.readPosition as usize)
+                    .unwrap()
+                    .to_string(),
+            );
         }
         self.position = self.readPosition;
         self.readPosition += 1;
     }
 
-
-    pub fn NextToken(&mut self) -> Token{
+    pub fn NextToken(&mut self) -> Token {
         let tok: Token;
         let assign_str = &String::from("=");
         let semicolon_str = &String::from(";");
@@ -46,8 +56,6 @@ impl Lexer {
 
         self.skipWhitespace();
 
-        
-
         match &self.ch {
             Some(s) if s == assign_str => {
                 if self.peekChar() == Some(String::from("=")) {
@@ -56,15 +64,31 @@ impl Lexer {
                 } else {
                     tok = newToken(token::ASSIGN, &self.ch);
                 }
-            },
-            Some(s) if s == semicolon_str => {tok = newToken(token::SEMICOLON, &self.ch);},
-            Some(s) if s == lparen_str => {tok = newToken(token::LPAREN, &self.ch);},
-            Some(s) if s == rparen_str => {tok = newToken(token::RPAREN, &self.ch);},
-            Some(s) if s == comma_str => {tok = newToken(token::COMMA, &self.ch);},
-            Some(s) if s == plus_str => {tok = newToken(token::PLUS, &self.ch);},
-            Some(s) if s == lbrace_str => {tok = newToken(token::LBRACE, &self.ch);},
-            Some(s) if s == rbrace_str => {tok = newToken(token::RBRACE, &self.ch);},
-            Some(s) if s == minus_str => {tok = newToken(token::MINUS, &self.ch);},
+            }
+            Some(s) if s == semicolon_str => {
+                tok = newToken(token::SEMICOLON, &self.ch);
+            }
+            Some(s) if s == lparen_str => {
+                tok = newToken(token::LPAREN, &self.ch);
+            }
+            Some(s) if s == rparen_str => {
+                tok = newToken(token::RPAREN, &self.ch);
+            }
+            Some(s) if s == comma_str => {
+                tok = newToken(token::COMMA, &self.ch);
+            }
+            Some(s) if s == plus_str => {
+                tok = newToken(token::PLUS, &self.ch);
+            }
+            Some(s) if s == lbrace_str => {
+                tok = newToken(token::LBRACE, &self.ch);
+            }
+            Some(s) if s == rbrace_str => {
+                tok = newToken(token::RBRACE, &self.ch);
+            }
+            Some(s) if s == minus_str => {
+                tok = newToken(token::MINUS, &self.ch);
+            }
             Some(s) if s == bang_str => {
                 if self.peekChar() == Some(String::from("=")) {
                     self.readChar();
@@ -72,24 +96,32 @@ impl Lexer {
                 } else {
                     tok = newToken(token::BANG, &self.ch);
                 }
-            },
-            Some(s) if s == slash_str => {tok = newToken(token::SLASH, &self.ch);},
-            Some(s) if s == asterisk_str => {tok = newToken(token::ASTERISK, &self.ch);},
-            Some(s) if s == lt_str => {tok = newToken(token::LT, &self.ch);},
-            Some(s) if s == gt_str => {tok = newToken(token::GT, &self.ch);},
-            None => {tok = newToken(token::EOF, &Some(String::from("")))},
+            }
+            Some(s) if s == slash_str => {
+                tok = newToken(token::SLASH, &self.ch);
+            }
+            Some(s) if s == asterisk_str => {
+                tok = newToken(token::ASTERISK, &self.ch);
+            }
+            Some(s) if s == lt_str => {
+                tok = newToken(token::LT, &self.ch);
+            }
+            Some(s) if s == gt_str => {
+                tok = newToken(token::GT, &self.ch);
+            }
+            None => tok = newToken(token::EOF, &Some(String::from(""))),
             _ => {
                 if isLetter(&self.ch) {
                     let literal = self.readIdentifier();
                     tok = newToken(token::LookupIdent(&literal), &Some(literal));
-                    return tok
-                } else if isDigit(&self.ch){
+                    return tok;
+                } else if isDigit(&self.ch) {
                     tok = newToken(token::INT, &Some(self.readNumber()));
-                    return tok
+                    return tok;
                 } else {
                     tok = newToken(token::ILLEGAL, &self.ch)
                 }
-            },
+            }
         }
 
         self.readChar();
@@ -116,7 +148,12 @@ impl Lexer {
     }
 
     fn skipWhitespace(&mut self) {
-        while self.ch.as_ref() != None && (*self.ch.as_ref().unwrap() == String::from(" ") || *self.ch.as_ref().unwrap() == String::from("\t") || *self.ch.as_ref().unwrap() == String::from("\n") || *self.ch.as_ref().unwrap() == String::from("\r")) {
+        while self.ch.as_ref() != None
+            && (*self.ch.as_ref().unwrap() == String::from(" ")
+                || *self.ch.as_ref().unwrap() == String::from("\t")
+                || *self.ch.as_ref().unwrap() == String::from("\n")
+                || *self.ch.as_ref().unwrap() == String::from("\r"))
+        {
             self.readChar();
         }
     }
@@ -125,13 +162,22 @@ impl Lexer {
         if self.readPosition >= self.input.len() as i32 {
             None
         } else {
-            Some(self.input.chars().nth(self.readPosition as usize).unwrap().to_string())
+            Some(
+                self.input
+                    .chars()
+                    .nth(self.readPosition as usize)
+                    .unwrap()
+                    .to_string(),
+            )
         }
     }
 }
 
-pub fn newToken(tokenType: token::TokenType, ch: &Option<String>) -> Token{
-    Token{Type: tokenType, Literal: ch.clone().unwrap()}
+pub fn newToken(tokenType: token::TokenType, ch: &Option<String>) -> Token {
+    Token {
+        Type: tokenType,
+        Literal: ch.clone().unwrap(),
+    }
 }
 
 fn isLetter(s: &Option<String>) -> bool {
@@ -153,5 +199,3 @@ fn isDigit(s: &Option<String>) -> bool {
         false
     }
 }
-
-

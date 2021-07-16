@@ -1,14 +1,14 @@
-use crate::{ast, lexer, token, lexer::Lexer, token::Token, ast::Program};
-use std::collections::HashMap;
+use crate::{ast, ast::Program, lexer, lexer::Lexer, token, token::Token};
 use phf::phf_map;
+use std::collections::HashMap;
 
-const LOWEST: i32       = 1;
-const EQUALS: i32       = 2;
-const LESSGRATER: i32   = 3;
-const SUM: i32          = 4;
-const PRODUCT: i32      = 5;
-const PREFIX: i32       = 6;
-const CALL: i32         = 7;
+const LOWEST: i32 = 1;
+const EQUALS: i32 = 2;
+const LESSGRATER: i32 = 3;
+const SUM: i32 = 4;
+const PRODUCT: i32 = 5;
+const PREFIX: i32 = 6;
+const CALL: i32 = 7;
 
 static precedences: phf::Map<&'static str, i32> = phf_map! {
     "==" => EQUALS,
@@ -30,7 +30,12 @@ pub struct Parser {
 
 impl Lexer {
     pub fn New(self) -> Parser {
-        let mut p = Parser{l: self, curToken: lexer::newToken(token::ILLEGAL, &Some(String::from(""))), peekToken: lexer::newToken(token::ILLEGAL, &Some(String::from(""))), errors: vec![]};
+        let mut p = Parser {
+            l: self,
+            curToken: lexer::newToken(token::ILLEGAL, &Some(String::from(""))),
+            peekToken: lexer::newToken(token::ILLEGAL, &Some(String::from(""))),
+            errors: vec![],
+        };
         p.nextToken();
         p.nextToken();
         p
@@ -43,8 +48,8 @@ impl Parser {
         self.peekToken = self.l.NextToken();
     }
 
-    pub fn ParseProgram(&mut self) -> Program{
-        let mut program = ast::Program{Statements: vec![]};
+    pub fn ParseProgram(&mut self) -> Program {
+        let mut program = ast::Program { Statements: vec![] };
         while self.curToken.Type != token::EOF {
             let stmt = self.parseStatement();
             if let Some(x) = stmt {
@@ -57,9 +62,9 @@ impl Parser {
 
     fn parseStatement(&mut self) -> Option<ast::Statement> {
         match self.curToken.Type {
-            token::LET => {return self.parseLetStatement()},
-            token::RETURN => {return self.parseReturnStatement()},
-            _ => {return self.parseExpressionStatement()},
+            token::LET => return self.parseLetStatement(),
+            token::RETURN => return self.parseReturnStatement(),
+            _ => return self.parseExpressionStatement(),
         };
     }
 
@@ -69,7 +74,10 @@ impl Parser {
             return None;
         }
 
-        let temp_name = ast::Identifier{Token: self.curToken.clone(), Value: self.curToken.Literal.clone()};
+        let temp_name = ast::Identifier {
+            Token: self.curToken.clone(),
+            Value: self.curToken.Literal.clone(),
+        };
 
         if !self.expectPeek(token::ASSIGN) {
             return None;
@@ -77,7 +85,11 @@ impl Parser {
 
         self.nextToken();
 
-        let stmt = ast::Statement::LetStatement{Token: temp_token, Name: temp_name, Value: self.parseExpression(LOWEST)};
+        let stmt = ast::Statement::LetStatement {
+            Token: temp_token,
+            Name: temp_name,
+            Value: self.parseExpression(LOWEST),
+        };
 
         while !self.curTokenIs(token::SEMICOLON) {
             self.nextToken();
@@ -109,14 +121,17 @@ impl Parser {
     }
 
     fn peekError(&mut self, t: token::TokenType) {
-        let msg = format!("expected next token to be {}, got {}, instead", t, self.peekToken.Type);
+        let msg = format!(
+            "expected next token to be {}, got {}, instead",
+            t, self.peekToken.Type
+        );
         self.errors.push(msg);
     }
 
     pub fn checkParserErrors(&self) {
         let errors = self.Errors();
         if errors.len() == 0 {
-            return
+            return;
         }
         println!("parser has {} errors", errors.len());
         for error in errors.iter() {
@@ -128,7 +143,10 @@ impl Parser {
     fn parseReturnStatement(&mut self) -> Option<ast::Statement> {
         let token_temp = self.curToken.clone();
         self.nextToken();
-        let stmt = ast::Statement::ReturnStatement{Token: token_temp, ReturnValue: self.parseExpression(LOWEST)};
+        let stmt = ast::Statement::ReturnStatement {
+            Token: token_temp,
+            ReturnValue: self.parseExpression(LOWEST),
+        };
         while !self.curTokenIs(token::SEMICOLON) {
             self.nextToken();
         }
@@ -137,9 +155,14 @@ impl Parser {
 
     fn parseExpressionStatement(&mut self) -> Option<ast::Statement> {
         let res = self.parseExpression(LOWEST);
-        if let ast::Expression::Nil = res {return None;}
+        if let ast::Expression::Nil = res {
+            return None;
+        }
 
-        let stmt = ast::Statement::ExpressionStatement{Token: self.curToken.clone(), Expression: res};
+        let stmt = ast::Statement::ExpressionStatement {
+            Token: self.curToken.clone(),
+            Expression: res,
+        };
 
         if self.peekTokenIs(token::SEMICOLON) {
             self.nextToken();
@@ -150,7 +173,10 @@ impl Parser {
 
     fn parseExpression(&mut self, precedence: i32) -> ast::Expression {
         let mut left = match self.curToken.Type {
-            token::IDENT => ast::Expression::Identifier(ast::Identifier{Token: self.curToken.clone(), Value: self.curToken.Literal.clone()}),
+            token::IDENT => ast::Expression::Identifier(ast::Identifier {
+                Token: self.curToken.clone(),
+                Value: self.curToken.Literal.clone(),
+            }),
             token::INT => self.parseIntergerLiteral(),
             token::BANG => self.parsePrefixExpression(),
             token::MINUS => self.parsePrefixExpression(),
@@ -162,24 +188,48 @@ impl Parser {
                 let msg = format!("no prefix parse function for {} found", self.curToken.Type);
                 self.errors.push(msg);
                 ast::Expression::Nil
-            },
+            }
         };
 
         while !self.peekTokenIs(token::SEMICOLON) && precedence < self.peekPrecedence() {
             println!("{}", self.peekToken);
             match self.peekToken.Type {
-                token::PLUS => {self.nextToken(); left = self.parseInfixExpression(left);},
-                token::MINUS => {self.nextToken(); left = self.parseInfixExpression(left);},
-                token::SLASH => {self.nextToken(); left = self.parseInfixExpression(left);},
-                token::ASTERISK => {self.nextToken(); left = self.parseInfixExpression(left);},
-                token::EQ => {self.nextToken(); left = self.parseInfixExpression(left);},
-                token::NOT_EQ => {self.nextToken(); left = self.parseInfixExpression(left);},
-                token::LT => {self.nextToken(); left = self.parseInfixExpression(left);},
-                token::GT => {self.nextToken(); left = self.parseInfixExpression(left);},
-                _ => {},
+                token::PLUS => {
+                    self.nextToken();
+                    left = self.parseInfixExpression(left);
+                }
+                token::MINUS => {
+                    self.nextToken();
+                    left = self.parseInfixExpression(left);
+                }
+                token::SLASH => {
+                    self.nextToken();
+                    left = self.parseInfixExpression(left);
+                }
+                token::ASTERISK => {
+                    self.nextToken();
+                    left = self.parseInfixExpression(left);
+                }
+                token::EQ => {
+                    self.nextToken();
+                    left = self.parseInfixExpression(left);
+                }
+                token::NOT_EQ => {
+                    self.nextToken();
+                    left = self.parseInfixExpression(left);
+                }
+                token::LT => {
+                    self.nextToken();
+                    left = self.parseInfixExpression(left);
+                }
+                token::GT => {
+                    self.nextToken();
+                    left = self.parseInfixExpression(left);
+                }
+                _ => {}
             }
         }
-        
+
         left
     }
 
@@ -191,8 +241,11 @@ impl Parser {
                 let msg = format!("could not parse {} as integer", self.curToken.Literal);
                 self.errors.push(msg);
                 ast::Expression::Nil
+            }
+            Ok(v) => ast::Expression::IntergerLiteral {
+                Token: self.curToken.clone(),
+                Value: v,
             },
-            Ok(v) => ast::Expression::IntergerLiteral{Token: self.curToken.clone(), Value: v}
         }
     }
 
@@ -200,14 +253,18 @@ impl Parser {
         let token_temp = self.curToken.clone();
         let ope_temp = self.curToken.Literal.clone();
         self.nextToken();
-        ast::Expression::PrefixExpression{Token: token_temp, Operator: ope_temp, Right: Box::new(self.parseExpression(PREFIX))}
+        ast::Expression::PrefixExpression {
+            Token: token_temp,
+            Operator: ope_temp,
+            Right: Box::new(self.parseExpression(PREFIX)),
+        }
     }
 
     fn peekPrecedence(&self) -> i32 {
         let p = precedences.get(self.peekToken.Type);
         match p {
             Some(x) => *x,
-            None => LOWEST
+            None => LOWEST,
         }
     }
 
@@ -215,7 +272,7 @@ impl Parser {
         let p = precedences.get(self.curToken.Type);
         match p {
             Some(x) => *x,
-            None => LOWEST
+            None => LOWEST,
         }
     }
 
@@ -224,11 +281,19 @@ impl Parser {
         let ope_temp = self.curToken.Literal.clone();
         let precedence = self.curPrecedence();
         self.nextToken();
-        ast::Expression::InfixExpression{Token: token_temp, Operator: ope_temp, Left: Box::new(left), Right: Box::new(self.parseExpression(precedence))}
+        ast::Expression::InfixExpression {
+            Token: token_temp,
+            Operator: ope_temp,
+            Left: Box::new(left),
+            Right: Box::new(self.parseExpression(precedence)),
+        }
     }
 
     fn parseBoolean(&self) -> ast::Expression {
-        ast::Expression::Boolean{Token: self.curToken.clone(), Value: self.curTokenIs(token::TRUE)}
+        ast::Expression::Boolean {
+            Token: self.curToken.clone(),
+            Value: self.curTokenIs(token::TRUE),
+        }
     }
 
     fn parseGroupedExpression(&mut self) -> ast::Expression {
@@ -236,7 +301,7 @@ impl Parser {
         let exp = self.parseExpression(LOWEST);
 
         if !self.expectPeek(token::RPAREN) {
-            return ast::Expression::Nil
+            return ast::Expression::Nil;
         }
 
         exp
@@ -244,20 +309,20 @@ impl Parser {
 
     fn parseIfExpression(&mut self) -> ast::Expression {
         let temp_token = self.curToken.clone();
-        
+
         if !self.expectPeek(token::LPAREN) {
-            return ast::Expression::Nil
+            return ast::Expression::Nil;
         }
 
         self.nextToken();
         let temp_condition = self.parseExpression(LOWEST);
 
         if !self.expectPeek(token::RPAREN) {
-            return ast::Expression::Nil
+            return ast::Expression::Nil;
         }
 
         if !self.expectPeek(token::LBRACE) {
-            return ast::Expression::Nil
+            return ast::Expression::Nil;
         }
 
         let temp_consequence = self.parseBlockStatement();
@@ -266,12 +331,17 @@ impl Parser {
         if self.peekTokenIs(token::ELSE) {
             self.nextToken();
             if !self.expectPeek(token::LBRACE) {
-                return ast::Expression::Nil
+                return ast::Expression::Nil;
             }
             temp_alternative = self.parseBlockStatement();
         }
 
-        ast::Expression::IfExpression{Token: temp_token, Condition: Box::new(temp_condition), Consequence: Box::new(temp_consequence), Alternative: Box::new(temp_alternative)}
+        ast::Expression::IfExpression {
+            Token: temp_token,
+            Condition: Box::new(temp_condition),
+            Consequence: Box::new(temp_consequence),
+            Alternative: Box::new(temp_alternative),
+        }
     }
 
     fn parseBlockStatement(&mut self) -> ast::Statement {
@@ -288,8 +358,9 @@ impl Parser {
             self.nextToken();
         }
 
-        ast::Statement::BlockStatement{Token: temp_token, Statements: temp_statements}
+        ast::Statement::BlockStatement {
+            Token: temp_token,
+            Statements: temp_statements,
+        }
     }
-
 }
-

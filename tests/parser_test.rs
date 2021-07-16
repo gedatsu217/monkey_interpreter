@@ -14,9 +14,39 @@ fn TestLetStatements() {
     }
 
     let tests = vec![
-        tests_struct{input: String::from("let x = 5;"), expectedIdentifier: String::from("x"), expectedValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5 as i64}},
-        tests_struct{input: String::from("let y = true;"), expectedIdentifier: String::from("y"), expectedValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}},
-        tests_struct{input: String::from("let foobar = y;"), expectedIdentifier: String::from("foobar"), expectedValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("y")}, Value: String::from("y")})},
+        tests_struct {
+            input: String::from("let x = 5;"),
+            expectedIdentifier: String::from("x"),
+            expectedValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5 as i64,
+            },
+        },
+        tests_struct {
+            input: String::from("let y = true;"),
+            expectedIdentifier: String::from("y"),
+            expectedValue: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::TRUE,
+                    Literal: String::from("true"),
+                },
+                Value: true,
+            },
+        },
+        tests_struct {
+            input: String::from("let foobar = y;"),
+            expectedIdentifier: String::from("foobar"),
+            expectedValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("y"),
+                },
+                Value: String::from("y"),
+            }),
+        },
     ];
 
     for tt in tests.iter() {
@@ -26,28 +56,35 @@ fn TestLetStatements() {
         let program = p.ParseProgram();
         p.checkParserErrors();
 
-        assert_eq!(1, program.Statements.len(), "program.Statesments does not contain 1 statements. got={}", program.Statements.len());
+        assert_eq!(
+            1,
+            program.Statements.len(),
+            "program.Statesments does not contain 1 statements. got={}",
+            program.Statements.len()
+        );
 
         let stmt = &program.Statements[0];
         if !testLetStatement(stmt, &tt.expectedIdentifier) {
             panic!("stmt not expected");
         }
         println!("{}", stmt);
-        if let ast::Statement::LetStatement{Token, Name, Value} = stmt {
+        if let ast::Statement::LetStatement { Token, Name, Value } = stmt {
             if !testLiteralExpression(Value, &tt.expectedValue) {
                 panic!("Value not expected");
             }
         } else {
             panic!("stmt not ast::Statement::LetStatement");
         }
-
     }
 }
 
-fn testLetStatement(s: &ast::Statement, name: &String) -> bool{
-    if let ast::Statement::LetStatement{Token, Name, ..} = s {
+fn testLetStatement(s: &ast::Statement, name: &String) -> bool {
+    if let ast::Statement::LetStatement { Token, Name, .. } = s {
         if Token.Literal != String::from("let") {
-            println!("LetStatement.Token.Literal not 'let'. got={}", Token.Literal);
+            println!(
+                "LetStatement.Token.Literal not 'let'. got={}",
+                Token.Literal
+            );
             return false;
         }
 
@@ -57,12 +94,15 @@ fn testLetStatement(s: &ast::Statement, name: &String) -> bool{
         }
 
         if Name.Token.Literal != *name {
-            println!("LetStatement.Name.Token.Literal not {}. got={}", name, Name.Token.Literal);
+            println!(
+                "LetStatement.Name.Token.Literal not {}. got={}",
+                name, Name.Token.Literal
+            );
             return false;
         }
 
         return true;
-    } 
+    }
     false
 }
 
@@ -74,30 +114,65 @@ fn TestReturnStatement() {
     }
 
     let tests = vec![
-        tests_struct{input: String::from("return 5;"), expectedValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        tests_struct{input: String::from("return true;"), expectedValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}},
-        tests_struct{input: String::from("return foobar;"), expectedValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")})},
+        tests_struct {
+            input: String::from("return 5;"),
+            expectedValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        tests_struct {
+            input: String::from("return true;"),
+            expectedValue: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::TRUE,
+                    Literal: String::from("true"),
+                },
+                Value: true,
+            },
+        },
+        tests_struct {
+            input: String::from("return foobar;"),
+            expectedValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+        },
     ];
 
     for tt in tests.iter() {
         let l = lexer::New(tt.input.clone());
         let mut p = l.New();
-    
+
         let program = p.ParseProgram();
         p.checkParserErrors();
-    
-        assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+
+        assert_eq!(
+            1,
+            program.Statements.len(),
+            "program.Statements does not contain 1 statements. got={}",
+            program.Statements.len()
+        );
 
         let stmt = &program.Statements[0];
 
-        if let ast::Statement::ReturnStatement{Token, ReturnValue} = stmt {    
-            assert_eq!(Token.Literal, String::from("return"), "Token.Literal not return. got={}", Token.Literal);
+        if let ast::Statement::ReturnStatement { Token, ReturnValue } = stmt {
+            assert_eq!(
+                Token.Literal,
+                String::from("return"),
+                "Token.Literal not return. got={}",
+                Token.Literal
+            );
             assert_eq!(testLiteralExpression(ReturnValue, &tt.expectedValue), true);
         } else {
             panic!("stmt not returnStatement. got={}", stmt);
         }
-
-
     }
 }
 
@@ -108,12 +183,17 @@ fn TestIdentifierExpression() {
     let mut p = l.New();
     let mut program = p.ParseProgram();
     p.checkParserErrors();
-    
-    assert_eq!(1, program.Statements.len(), "program has not enough statements. got={}", program.Statements.len());
+
+    assert_eq!(
+        1,
+        program.Statements.len(),
+        "program has not enough statements. got={}",
+        program.Statements.len()
+    );
 
     let stmt = &program.Statements[0];
 
-    if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
+    if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
         if let ast::Expression::Identifier(x) = Expression {
             if x.Value != String::from("foobar") {
                 println!("x.Value not foobar. got={}", x.Value);
@@ -126,7 +206,10 @@ fn TestIdentifierExpression() {
             panic!();
         }
     } else {
-        println!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+        println!(
+            "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+            program.Statements[0]
+        );
         panic!();
     }
 }
@@ -139,12 +222,17 @@ fn TestIntegerLiteralExpression() {
     let program = p.ParseProgram();
     p.checkParserErrors();
 
-    assert_eq!(1, program.Statements.len(), "program has not enough statements. got={}", program.Statements.len());
+    assert_eq!(
+        1,
+        program.Statements.len(),
+        "program has not enough statements. got={}",
+        program.Statements.len()
+    );
 
     let stmt = &program.Statements[0];
 
-    if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
-        if let ast::Expression::IntergerLiteral{Token, Value} = Expression {
+    if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
+        if let ast::Expression::IntergerLiteral { Token, Value } = Expression {
             if *Value != 5 {
                 println!("Value not foobar. got={}", Value);
             }
@@ -152,11 +240,17 @@ fn TestIntegerLiteralExpression() {
                 println!("Token.Literal not 5. got={}", Token.Literal);
             }
         } else {
-            println!("exp not ast::Expression::IntegerLiteral. got={}", Expression);
+            println!(
+                "exp not ast::Expression::IntegerLiteral. got={}",
+                Expression
+            );
             panic!();
         }
     } else {
-        println!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+        println!(
+            "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+            program.Statements[0]
+        );
         panic!();
     }
 }
@@ -170,12 +264,72 @@ fn TestParsingPrefixExpression() {
     }
 
     let prefixTests = vec![
-        prefixTests_struct{input: String::from("!5;"), operator: String::from("!"), value: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        prefixTests_struct{input: String::from("-15;"), operator: String::from("-"), value: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("15")}, Value: 15}},
-        prefixTests_struct{input: String::from("!foobar;"), operator: String::from("!"), value: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")})},
-        prefixTests_struct{input: String::from("-foobar;"), operator: String::from("-"), value: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")})},
-        prefixTests_struct{input: String::from("!true"), operator: String::from("!"), value: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}},
-        prefixTests_struct{input: String::from("!false"), operator: String::from("!"), value: ast::Expression::Boolean{Token: Token{Type: token::FALSE, Literal: String::from("false")}, Value: false}},
+        prefixTests_struct {
+            input: String::from("!5;"),
+            operator: String::from("!"),
+            value: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        prefixTests_struct {
+            input: String::from("-15;"),
+            operator: String::from("-"),
+            value: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("15"),
+                },
+                Value: 15,
+            },
+        },
+        prefixTests_struct {
+            input: String::from("!foobar;"),
+            operator: String::from("!"),
+            value: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+        },
+        prefixTests_struct {
+            input: String::from("-foobar;"),
+            operator: String::from("-"),
+            value: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+        },
+        prefixTests_struct {
+            input: String::from("!true"),
+            operator: String::from("!"),
+            value: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::TRUE,
+                    Literal: String::from("true"),
+                },
+                Value: true,
+            },
+        },
+        prefixTests_struct {
+            input: String::from("!false"),
+            operator: String::from("!"),
+            value: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::FALSE,
+                    Literal: String::from("false"),
+                },
+                Value: false,
+            },
+        },
     ];
 
     for tt in prefixTests.iter() {
@@ -184,25 +338,44 @@ fn TestParsingPrefixExpression() {
         let program = p.ParseProgram();
         p.checkParserErrors();
 
-        assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+        assert_eq!(
+            1,
+            program.Statements.len(),
+            "program.Statements does not contain 1 statements. got={}",
+            program.Statements.len()
+        );
 
         let stmt = &program.Statements[0];
-        if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
-            if let ast::Expression::PrefixExpression{Token, Operator, Right} = Expression {
-                assert_eq!(*Operator, tt.operator, "Operator is not {}. got={}", tt.operator, Operator);
+        if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
+            if let ast::Expression::PrefixExpression {
+                Token,
+                Operator,
+                Right,
+            } = Expression
+            {
+                assert_eq!(
+                    *Operator, tt.operator,
+                    "Operator is not {}. got={}",
+                    tt.operator, Operator
+                );
                 assert_eq!(testLiteralExpression(Right, &tt.value), true);
             } else {
-                panic!("stmt is not ast::Expression::PrefixExpression. got={}", Expression);
+                panic!(
+                    "stmt is not ast::Expression::PrefixExpression. got={}",
+                    Expression
+                );
             }
         } else {
-            panic!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+            panic!(
+                "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+                program.Statements[0]
+            );
         }
     }
-
 }
 
 fn testIntegerLiteral(il: &ast::Expression, value: i64) -> bool {
-    if let ast::Expression::IntergerLiteral{Token, Value} = il {
+    if let ast::Expression::IntergerLiteral { Token, Value } = il {
         if *Value == value {
             if Token.Literal == value.to_string() {
                 return true;
@@ -227,25 +400,348 @@ fn TestParsingInfixExpressions() {
         rightValue: ast::Expression,
     }
     let infixTests = vec![
-        infixTests_struct{input: String::from("5 + 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("+"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        infixTests_struct{input: String::from("5 - 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("-"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        infixTests_struct{input: String::from("5 * 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("*"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        infixTests_struct{input: String::from("5 / 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("/"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        infixTests_struct{input: String::from("5 > 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from(">"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        infixTests_struct{input: String::from("5 < 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("<"), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        infixTests_struct{input: String::from("5 == 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("=="), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        infixTests_struct{input: String::from("5 != 5;"), leftValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}, operator: String::from("!="), rightValue: ast::Expression::IntergerLiteral{Token: Token{Type: token::INT, Literal: String::from("5")}, Value: 5}},
-        infixTests_struct{input: String::from("foobar + barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("+"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
-        infixTests_struct{input: String::from("foobar - barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("-"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
-        infixTests_struct{input: String::from("foobar * barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("*"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
-        infixTests_struct{input: String::from("foobar / barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("/"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
-        infixTests_struct{input: String::from("foobar > barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from(">"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
-        infixTests_struct{input: String::from("foobar < barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("<"), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
-        infixTests_struct{input: String::from("foobar == barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("=="), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
-        infixTests_struct{input: String::from("foobar != barfoo"), leftValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("foobar")}, Value: String::from("foobar")}), operator: String::from("!="), rightValue: ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("barfoo")}, Value: String::from("barfoo")})},
-        infixTests_struct{input: String::from("true == true"), leftValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}, operator: String::from("=="), rightValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}},
-        infixTests_struct{input: String::from("true != false"), leftValue: ast::Expression::Boolean{Token: Token{Type: token::TRUE, Literal: String::from("true")}, Value: true}, operator: String::from("!="), rightValue: ast::Expression::Boolean{Token: Token{Type: token::FALSE, Literal: String::from("false")}, Value: false}},
-        infixTests_struct{input: String::from("false == false"), leftValue: ast::Expression::Boolean{Token: Token{Type: token::FALSE, Literal: String::from("false")}, Value: false}, operator: String::from("=="), rightValue: ast::Expression::Boolean{Token: Token{Type: token::FALSE, Literal: String::from("false")}, Value: false}},
+        infixTests_struct {
+            input: String::from("5 + 5;"),
+            leftValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+            operator: String::from("+"),
+            rightValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        infixTests_struct {
+            input: String::from("5 - 5;"),
+            leftValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+            operator: String::from("-"),
+            rightValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        infixTests_struct {
+            input: String::from("5 * 5;"),
+            leftValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+            operator: String::from("*"),
+            rightValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        infixTests_struct {
+            input: String::from("5 / 5;"),
+            leftValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+            operator: String::from("/"),
+            rightValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        infixTests_struct {
+            input: String::from("5 > 5;"),
+            leftValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+            operator: String::from(">"),
+            rightValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        infixTests_struct {
+            input: String::from("5 < 5;"),
+            leftValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+            operator: String::from("<"),
+            rightValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        infixTests_struct {
+            input: String::from("5 == 5;"),
+            leftValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+            operator: String::from("=="),
+            rightValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        infixTests_struct {
+            input: String::from("5 != 5;"),
+            leftValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+            operator: String::from("!="),
+            rightValue: ast::Expression::IntergerLiteral {
+                Token: Token {
+                    Type: token::INT,
+                    Literal: String::from("5"),
+                },
+                Value: 5,
+            },
+        },
+        infixTests_struct {
+            input: String::from("foobar + barfoo"),
+            leftValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+            operator: String::from("+"),
+            rightValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("barfoo"),
+                },
+                Value: String::from("barfoo"),
+            }),
+        },
+        infixTests_struct {
+            input: String::from("foobar - barfoo"),
+            leftValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+            operator: String::from("-"),
+            rightValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("barfoo"),
+                },
+                Value: String::from("barfoo"),
+            }),
+        },
+        infixTests_struct {
+            input: String::from("foobar * barfoo"),
+            leftValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+            operator: String::from("*"),
+            rightValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("barfoo"),
+                },
+                Value: String::from("barfoo"),
+            }),
+        },
+        infixTests_struct {
+            input: String::from("foobar / barfoo"),
+            leftValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+            operator: String::from("/"),
+            rightValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("barfoo"),
+                },
+                Value: String::from("barfoo"),
+            }),
+        },
+        infixTests_struct {
+            input: String::from("foobar > barfoo"),
+            leftValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+            operator: String::from(">"),
+            rightValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("barfoo"),
+                },
+                Value: String::from("barfoo"),
+            }),
+        },
+        infixTests_struct {
+            input: String::from("foobar < barfoo"),
+            leftValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+            operator: String::from("<"),
+            rightValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("barfoo"),
+                },
+                Value: String::from("barfoo"),
+            }),
+        },
+        infixTests_struct {
+            input: String::from("foobar == barfoo"),
+            leftValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+            operator: String::from("=="),
+            rightValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("barfoo"),
+                },
+                Value: String::from("barfoo"),
+            }),
+        },
+        infixTests_struct {
+            input: String::from("foobar != barfoo"),
+            leftValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("foobar"),
+                },
+                Value: String::from("foobar"),
+            }),
+            operator: String::from("!="),
+            rightValue: ast::Expression::Identifier(ast::Identifier {
+                Token: Token {
+                    Type: token::IDENT,
+                    Literal: String::from("barfoo"),
+                },
+                Value: String::from("barfoo"),
+            }),
+        },
+        infixTests_struct {
+            input: String::from("true == true"),
+            leftValue: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::TRUE,
+                    Literal: String::from("true"),
+                },
+                Value: true,
+            },
+            operator: String::from("=="),
+            rightValue: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::TRUE,
+                    Literal: String::from("true"),
+                },
+                Value: true,
+            },
+        },
+        infixTests_struct {
+            input: String::from("true != false"),
+            leftValue: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::TRUE,
+                    Literal: String::from("true"),
+                },
+                Value: true,
+            },
+            operator: String::from("!="),
+            rightValue: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::FALSE,
+                    Literal: String::from("false"),
+                },
+                Value: false,
+            },
+        },
+        infixTests_struct {
+            input: String::from("false == false"),
+            leftValue: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::FALSE,
+                    Literal: String::from("false"),
+                },
+                Value: false,
+            },
+            operator: String::from("=="),
+            rightValue: ast::Expression::Boolean {
+                Token: Token {
+                    Type: token::FALSE,
+                    Literal: String::from("false"),
+                },
+                Value: false,
+            },
+        },
     ];
 
     for tt in infixTests.iter() {
@@ -254,21 +750,40 @@ fn TestParsingInfixExpressions() {
         let program = p.ParseProgram();
         p.checkParserErrors();
 
-        assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+        assert_eq!(
+            1,
+            program.Statements.len(),
+            "program.Statements does not contain 1 statements. got={}",
+            program.Statements.len()
+        );
 
         let stmt = &program.Statements[0];
 
-        if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
-            if let ast::Expression::InfixExpression{Token, Left, Operator, Right} = Expression {
-                assert_eq!(testInfixExpression(Expression, Left, Operator.clone(), Right), true);
+        if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
+            if let ast::Expression::InfixExpression {
+                Token,
+                Left,
+                Operator,
+                Right,
+            } = Expression
+            {
+                assert_eq!(
+                    testInfixExpression(Expression, Left, Operator.clone(), Right),
+                    true
+                );
             } else {
-                panic!("Expression is not ast::Expression::InfixExpression. got={}", Expression);
+                panic!(
+                    "Expression is not ast::Expression::InfixExpression. got={}",
+                    Expression
+                );
             }
         } else {
-            panic!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+            panic!(
+                "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+                program.Statements[0]
+            );
         }
     }
-
 }
 #[test]
 fn TestOperatorPrecedenceParsing() {
@@ -278,27 +793,90 @@ fn TestOperatorPrecedenceParsing() {
     }
 
     let tests = vec![
-        tests_struct{input: String::from("-a * b"), expected: String::from("((-a) * b)")},
-        tests_struct{input: String::from("!-a"), expected: String::from("(!(-a))")},
-        tests_struct{input: String::from("a + b + c"), expected: String::from("((a + b) + c)")},
-        tests_struct{input: String::from("a + b - c"), expected: String::from("((a + b) - c)")},
-        tests_struct{input: String::from("a * b * c"), expected: String::from("((a * b) * c)")},
-        tests_struct{input: String::from("a * b / c"), expected: String::from("((a * b) / c)")},
-        tests_struct{input: String::from("a + b / c"), expected: String::from("(a + (b / c))")},
-        tests_struct{input: String::from("a + b * c + d / e - f"), expected: String::from("(((a + (b * c)) + (d / e)) - f)")},
-        tests_struct{input: String::from("3 + 4; -5 * 5"), expected: String::from("(3+4)((-5) * 5)")},
-        tests_struct{input: String::from("5 > 4 == 3 < 4"), expected: String::from("((5 > 4) == (3 < 4))")},
-        tests_struct{input: String::from("5 < 4 != 3 > 4"), expected: String::from("((5 < 4) != (3 > 4))")},
-        tests_struct{input: String::from("3 + 4 * 5 == 3 * 1 + 4 * 5"), expected: String::from("((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")},
-        tests_struct{input: String::from("true"), expected: String::from("true")},
-        tests_struct{input: String::from("false"), expected: String::from("false")},
-        tests_struct{input: String::from("3 > 5 == false"), expected: String::from("((3 > 5) == false)")},
-        tests_struct{input: String::from("3 < 5 == true"), expected: String::from("((3 < 5) == true)")},
-        tests_struct{input: String::from("1 + (2 + 3) + 4"), expected: String::from("((1 + (2 + 3)) + 4)")},
-        tests_struct{input: String::from("(5 + 5) * 2"), expected: String::from("((5 + 5) * 2)")},
-        tests_struct{input: String::from("2 / (5 + 5)"), expected: String::from("(2 / (5 + 5))")},
-        tests_struct{input: String::from("-(5 + 5)"), expected: String::from("(-(5 + 5))")},
-        tests_struct{input: String::from("!(true == true)"), expected: String::from("(!(true == true))")},
+        tests_struct {
+            input: String::from("-a * b"),
+            expected: String::from("((-a) * b)"),
+        },
+        tests_struct {
+            input: String::from("!-a"),
+            expected: String::from("(!(-a))"),
+        },
+        tests_struct {
+            input: String::from("a + b + c"),
+            expected: String::from("((a + b) + c)"),
+        },
+        tests_struct {
+            input: String::from("a + b - c"),
+            expected: String::from("((a + b) - c)"),
+        },
+        tests_struct {
+            input: String::from("a * b * c"),
+            expected: String::from("((a * b) * c)"),
+        },
+        tests_struct {
+            input: String::from("a * b / c"),
+            expected: String::from("((a * b) / c)"),
+        },
+        tests_struct {
+            input: String::from("a + b / c"),
+            expected: String::from("(a + (b / c))"),
+        },
+        tests_struct {
+            input: String::from("a + b * c + d / e - f"),
+            expected: String::from("(((a + (b * c)) + (d / e)) - f)"),
+        },
+        tests_struct {
+            input: String::from("3 + 4; -5 * 5"),
+            expected: String::from("(3+4)((-5) * 5)"),
+        },
+        tests_struct {
+            input: String::from("5 > 4 == 3 < 4"),
+            expected: String::from("((5 > 4) == (3 < 4))"),
+        },
+        tests_struct {
+            input: String::from("5 < 4 != 3 > 4"),
+            expected: String::from("((5 < 4) != (3 > 4))"),
+        },
+        tests_struct {
+            input: String::from("3 + 4 * 5 == 3 * 1 + 4 * 5"),
+            expected: String::from("((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+        },
+        tests_struct {
+            input: String::from("true"),
+            expected: String::from("true"),
+        },
+        tests_struct {
+            input: String::from("false"),
+            expected: String::from("false"),
+        },
+        tests_struct {
+            input: String::from("3 > 5 == false"),
+            expected: String::from("((3 > 5) == false)"),
+        },
+        tests_struct {
+            input: String::from("3 < 5 == true"),
+            expected: String::from("((3 < 5) == true)"),
+        },
+        tests_struct {
+            input: String::from("1 + (2 + 3) + 4"),
+            expected: String::from("((1 + (2 + 3)) + 4)"),
+        },
+        tests_struct {
+            input: String::from("(5 + 5) * 2"),
+            expected: String::from("((5 + 5) * 2)"),
+        },
+        tests_struct {
+            input: String::from("2 / (5 + 5)"),
+            expected: String::from("(2 / (5 + 5))"),
+        },
+        tests_struct {
+            input: String::from("-(5 + 5)"),
+            expected: String::from("(-(5 + 5))"),
+        },
+        tests_struct {
+            input: String::from("!(true == true)"),
+            expected: String::from("(!(true == true))"),
+        },
     ];
 
     for tt in tests.iter() {
@@ -311,7 +889,6 @@ fn TestOperatorPrecedenceParsing() {
         if actual != tt.expected {
             println!("expected={}, got={}", tt.expected, actual);
         }
-
     }
 }
 
@@ -323,7 +900,7 @@ fn testIdentifier(exp: &ast::Expression, value: String) -> bool {
             } else {
                 println!("x.Token.Literal not {}. got={}", value, x.Token.Literal);
                 false
-            } 
+            }
         } else {
             println!("x.Value not {}. got={}", value, x.Value);
             false
@@ -336,9 +913,9 @@ fn testIdentifier(exp: &ast::Expression, value: String) -> bool {
 
 fn testLiteralExpression(exp: &ast::Expression, expected: &ast::Expression) -> bool {
     match expected {
-        ast::Expression::IntergerLiteral{Token, Value} => testIntegerLiteral(&exp, *Value),
+        ast::Expression::IntergerLiteral { Token, Value } => testIntegerLiteral(&exp, *Value),
         ast::Expression::Identifier(x) => testIdentifier(exp, x.Value.clone()),
-        ast::Expression::Boolean{Token, Value} => testBooleanLiteral(exp, *Value),
+        ast::Expression::Boolean { Token, Value } => testBooleanLiteral(exp, *Value),
         _ => {
             println!("type of exp not handled. got={}", exp);
             false
@@ -346,22 +923,33 @@ fn testLiteralExpression(exp: &ast::Expression, expected: &ast::Expression) -> b
     }
 }
 
-fn testInfixExpression(exp: &ast::Expression, left: &ast::Expression, operator: String, right: &ast::Expression) -> bool {
-    if let ast::Expression::InfixExpression{Token, Left, Operator, Right} = exp {
+fn testInfixExpression(
+    exp: &ast::Expression,
+    left: &ast::Expression,
+    operator: String,
+    right: &ast::Expression,
+) -> bool {
+    if let ast::Expression::InfixExpression {
+        Token,
+        Left,
+        Operator,
+        Right,
+    } = exp
+    {
         if !testLiteralExpression(Left, left) {
-            return false
+            return false;
         }
 
         if *Operator != operator {
             println!("Operator is not {}. got={}", operator, Operator);
-            return false
+            return false;
         }
 
         if !testLiteralExpression(Right, right) {
-            return false
+            return false;
         }
 
-        true 
+        true
     } else {
         println!("exp is not ast::Expression::InfixExpression. got={}", exp);
         false
@@ -376,23 +964,34 @@ fn TestBooleanExpression() {
     }
 
     let tests = vec![
-        tests_struct{input: String::from("true;"), expectedBoolean: true},
-        tests_struct{input: String::from("false;"), expectedBoolean: false},
+        tests_struct {
+            input: String::from("true;"),
+            expectedBoolean: true,
+        },
+        tests_struct {
+            input: String::from("false;"),
+            expectedBoolean: false,
+        },
     ];
 
     for tt in tests.iter() {
         let l = lexer::New(tt.input.clone());
         let mut p = l.New();
-    
+
         let program = p.ParseProgram();
         p.checkParserErrors();
-    
-        assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+
+        assert_eq!(
+            1,
+            program.Statements.len(),
+            "program.Statements does not contain 1 statements. got={}",
+            program.Statements.len()
+        );
 
         let stmt = &program.Statements[0];
 
-        if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {    
-            if let ast::Expression::Boolean{Token, Value} = Expression {
+        if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
+            if let ast::Expression::Boolean { Token, Value } = Expression {
                 assert_eq!(Value, &tt.expectedBoolean);
             } else {
                 panic!("Expression not Boolean. got={}", Expression)
@@ -400,21 +999,18 @@ fn TestBooleanExpression() {
         } else {
             panic!("stmt not ast::Statement::ExpressionStatement. got={}", stmt);
         }
-
-
     }
-
 }
 
 fn testBooleanLiteral(exp: &ast::Expression, value: bool) -> bool {
-    if let ast::Expression::Boolean{Token, Value} = exp {
+    if let ast::Expression::Boolean { Token, Value } = exp {
         if Value != &value {
             println!("Value not {}. got={}", value, Value);
-            return false
+            return false;
         }
         if Token.Literal != format!("{}", value) {
             println!("Token.Literal not {}. got={}", value, Token.Literal);
-            return false
+            return false;
         }
 
         true
@@ -433,33 +1029,81 @@ fn TestIfExpression() {
     let program = p.ParseProgram();
     p.checkParserErrors();
 
-    assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+    assert_eq!(
+        1,
+        program.Statements.len(),
+        "program.Statements does not contain 1 statements. got={}",
+        program.Statements.len()
+    );
 
     let stmt = &program.Statements[0];
 
-    if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
-        if let ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} = Expression {
-            assert_eq!(true, testInfixExpression(&Condition, &ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("x")}, Value: String::from("x")}), String::from("<"), &ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("y")}, Value: String::from("y")})));
-            if let ast::Statement::BlockStatement{Token, Statements} = Consequence.as_ref() {
-                assert_eq!(1, Statements.len(), "Consequence is not 1 statements. got={}", Statements.len());
+    if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
+        if let ast::Expression::IfExpression {
+            Token,
+            Condition,
+            Consequence,
+            Alternative,
+        } = Expression
+        {
+            assert_eq!(
+                true,
+                testInfixExpression(
+                    &Condition,
+                    &ast::Expression::Identifier(ast::Identifier {
+                        Token: Token {
+                            Type: token::IDENT,
+                            Literal: String::from("x")
+                        },
+                        Value: String::from("x")
+                    }),
+                    String::from("<"),
+                    &ast::Expression::Identifier(ast::Identifier {
+                        Token: Token {
+                            Type: token::IDENT,
+                            Literal: String::from("y")
+                        },
+                        Value: String::from("y")
+                    })
+                )
+            );
+            if let ast::Statement::BlockStatement { Token, Statements } = Consequence.as_ref() {
+                assert_eq!(
+                    1,
+                    Statements.len(),
+                    "Consequence is not 1 statements. got={}",
+                    Statements.len()
+                );
                 let consequence = &Statements[0];
-                if let ast::Statement::ExpressionStatement{Token, Expression} = consequence {
+                if let ast::Statement::ExpressionStatement { Token, Expression } = consequence {
                     assert_eq!(true, testIdentifier(&Expression, String::from("x")));
                     if let ast::Statement::Nil = Alternative.as_ref() {
                     } else {
                         println!("Alternative is not Nil. got={}", Alternative);
                     }
                 } else {
-                    panic!("Statements[0] is not ast::Statement::ExpressionStatement. got={}", Statements[0]);
+                    panic!(
+                        "Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+                        Statements[0]
+                    );
                 }
             } else {
-                panic!("Consequence is not ast::Statement::BlockStatement. got={}", Consequence);
+                panic!(
+                    "Consequence is not ast::Statement::BlockStatement. got={}",
+                    Consequence
+                );
             }
         } else {
-            panic!("Expression is not ast::Expression::IfExpression. got={}", Expression);
+            panic!(
+                "Expression is not ast::Expression::IfExpression. got={}",
+                Expression
+            );
         }
     } else {
-        panic!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+        panic!(
+            "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+            program.Statements[0]
+        );
     }
 }
 
@@ -472,42 +1116,99 @@ fn TestIfElseExpression() {
     let program = p.ParseProgram();
     p.checkParserErrors();
 
-    assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+    assert_eq!(
+        1,
+        program.Statements.len(),
+        "program.Statements does not contain 1 statements. got={}",
+        program.Statements.len()
+    );
 
     let stmt = &program.Statements[0];
 
-    if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
-        if let ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} = Expression {
-            assert_eq!(true, testInfixExpression(&Condition, &ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("x")}, Value: String::from("x")}), String::from("<"), &ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("y")}, Value: String::from("y")})));
-            if let ast::Statement::BlockStatement{Token, Statements} = Consequence.as_ref() {
-                assert_eq!(1, Statements.len(), "Consequence is not 1 statements. got={}", Statements.len());
+    if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
+        if let ast::Expression::IfExpression {
+            Token,
+            Condition,
+            Consequence,
+            Alternative,
+        } = Expression
+        {
+            assert_eq!(
+                true,
+                testInfixExpression(
+                    &Condition,
+                    &ast::Expression::Identifier(ast::Identifier {
+                        Token: Token {
+                            Type: token::IDENT,
+                            Literal: String::from("x")
+                        },
+                        Value: String::from("x")
+                    }),
+                    String::from("<"),
+                    &ast::Expression::Identifier(ast::Identifier {
+                        Token: Token {
+                            Type: token::IDENT,
+                            Literal: String::from("y")
+                        },
+                        Value: String::from("y")
+                    })
+                )
+            );
+            if let ast::Statement::BlockStatement { Token, Statements } = Consequence.as_ref() {
+                assert_eq!(
+                    1,
+                    Statements.len(),
+                    "Consequence is not 1 statements. got={}",
+                    Statements.len()
+                );
                 let consequence = &Statements[0];
-                if let ast::Statement::ExpressionStatement{Token, Expression} = consequence {
+                if let ast::Statement::ExpressionStatement { Token, Expression } = consequence {
                     assert_eq!(true, testIdentifier(&Expression, String::from("x")));
                 } else {
-                    panic!("Statements[0] is not ast::Statement::ExpressionStatement. got={}", Statements[0]);
+                    panic!(
+                        "Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+                        Statements[0]
+                    );
                 }
             } else {
-                panic!("Consequence is not ast::Statement::BlockStatement. got={}", Consequence);
+                panic!(
+                    "Consequence is not ast::Statement::BlockStatement. got={}",
+                    Consequence
+                );
             }
 
-            if let ast::Statement::BlockStatement{Token, Statements} = Alternative.as_ref() {
-                assert_eq!(1, Statements.len(), "Alternative is not 1 statements. got={}", Statements.len());
+            if let ast::Statement::BlockStatement { Token, Statements } = Alternative.as_ref() {
+                assert_eq!(
+                    1,
+                    Statements.len(),
+                    "Alternative is not 1 statements. got={}",
+                    Statements.len()
+                );
                 let alternative = &Statements[0];
-                if let ast::Statement::ExpressionStatement{Token, Expression} = alternative {
+                if let ast::Statement::ExpressionStatement { Token, Expression } = alternative {
                     assert_eq!(true, testIdentifier(&Expression, String::from("y")));
                 } else {
-                    panic!("Statements[0] is not ast::Statement::ExpressionStatement. got={}", Statements[0]);
+                    panic!(
+                        "Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+                        Statements[0]
+                    );
                 }
             } else {
-                panic!("Alternative is not ast::Statement::BlockStatement. got={}", Alternative);
+                panic!(
+                    "Alternative is not ast::Statement::BlockStatement. got={}",
+                    Alternative
+                );
             }
-
         } else {
-            panic!("Expression is not ast::Expression::IfExpression. got={}", Expression);
+            panic!(
+                "Expression is not ast::Expression::IfExpression. got={}",
+                Expression
+            );
         }
     } else {
-        panic!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+        panic!(
+            "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+            program.Statements[0]
+        );
     }
 }
-

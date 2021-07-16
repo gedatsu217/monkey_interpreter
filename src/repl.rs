@@ -1,4 +1,4 @@
-use crate::{token, lexer};
+use crate::{lexer, token};
 use std::io;
 
 const PROMPT: &str = ">> ";

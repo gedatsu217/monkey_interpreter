@@ -157,6 +157,7 @@ impl Parser {
             token::TRUE => self.parseBoolean(),
             token::FALSE => self.parseBoolean(),
             token::LPAREN => self.parseGroupedExpression(),
+            token::IF => self.parseIfExpression(),
             _ => {
                 let msg = format!("no prefix parse function for {} found", self.curToken.Type);
                 self.errors.push(msg);
@@ -239,6 +240,55 @@ impl Parser {
         }
 
         exp
+    }
+
+    fn parseIfExpression(&mut self) -> ast::Expression {
+        let temp_token = self.curToken.clone();
+        
+        if !self.expectPeek(token::LPAREN) {
+            return ast::Expression::Nil
+        }
+
+        self.nextToken();
+        let temp_condition = self.parseExpression(LOWEST);
+
+        if !self.expectPeek(token::RPAREN) {
+            return ast::Expression::Nil
+        }
+
+        if !self.expectPeek(token::LBRACE) {
+            return ast::Expression::Nil
+        }
+
+        let temp_consequence = self.parseBlockStatement();
+        let mut temp_alternative = ast::Statement::Nil;
+
+        if self.peekTokenIs(token::ELSE) {
+            self.nextToken();
+            if !self.expectPeek(token::LBRACE) {
+                return ast::Expression::Nil
+            }
+            temp_alternative = self.parseBlockStatement();
+        }
+
+        ast::Expression::IfExpression{Token: temp_token, Condition: Box::new(temp_condition), Consequence: Box::new(temp_consequence), Alternative: Box::new(temp_alternative)}
+    }
+
+    fn parseBlockStatement(&mut self) -> ast::Statement {
+        let temp_token = self.curToken.clone();
+        let mut temp_statements = vec![];
+
+        self.nextToken();
+
+        while !self.curTokenIs(token::RBRACE) && !self.curTokenIs(token::EOF) {
+            let stmt = self.parseStatement();
+            if let Some(x) = stmt {
+                temp_statements.push(x);
+            }
+            self.nextToken();
+        }
+
+        ast::Statement::BlockStatement{Token: temp_token, Statements: temp_statements}
     }
 
 }

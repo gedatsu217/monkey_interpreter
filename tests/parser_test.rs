@@ -424,3 +424,90 @@ fn testBooleanLiteral(exp: &ast::Expression, value: bool) -> bool {
     }
 }
 
+#[test]
+fn TestIfExpression() {
+    let input = String::from("if (x < y) {x}");
+
+    let l = lexer::New(input);
+    let mut p = l.New();
+    let program = p.ParseProgram();
+    p.checkParserErrors();
+
+    assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+
+    let stmt = &program.Statements[0];
+
+    if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
+        if let ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} = Expression {
+            assert_eq!(true, testInfixExpression(&Condition, &ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("x")}, Value: String::from("x")}), String::from("<"), &ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("y")}, Value: String::from("y")})));
+            if let ast::Statement::BlockStatement{Token, Statements} = Consequence.as_ref() {
+                assert_eq!(1, Statements.len(), "Consequence is not 1 statements. got={}", Statements.len());
+                let consequence = &Statements[0];
+                if let ast::Statement::ExpressionStatement{Token, Expression} = consequence {
+                    assert_eq!(true, testIdentifier(&Expression, String::from("x")));
+                    if let ast::Statement::Nil = Alternative.as_ref() {
+                    } else {
+                        println!("Alternative is not Nil. got={}", Alternative);
+                    }
+                } else {
+                    panic!("Statements[0] is not ast::Statement::ExpressionStatement. got={}", Statements[0]);
+                }
+            } else {
+                panic!("Consequence is not ast::Statement::BlockStatement. got={}", Consequence);
+            }
+        } else {
+            panic!("Expression is not ast::Expression::IfExpression. got={}", Expression);
+        }
+    } else {
+        panic!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+    }
+}
+
+#[test]
+fn TestIfElseExpression() {
+    let input = String::from("if (x < y) {x} else {y}");
+
+    let l = lexer::New(input);
+    let mut p = l.New();
+    let program = p.ParseProgram();
+    p.checkParserErrors();
+
+    assert_eq!(1, program.Statements.len(), "program.Statements does not contain 1 statements. got={}", program.Statements.len());
+
+    let stmt = &program.Statements[0];
+
+    if let ast::Statement::ExpressionStatement{Token, Expression} = stmt {
+        if let ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} = Expression {
+            assert_eq!(true, testInfixExpression(&Condition, &ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("x")}, Value: String::from("x")}), String::from("<"), &ast::Expression::Identifier(ast::Identifier{Token: Token{Type: token::IDENT, Literal: String::from("y")}, Value: String::from("y")})));
+            if let ast::Statement::BlockStatement{Token, Statements} = Consequence.as_ref() {
+                assert_eq!(1, Statements.len(), "Consequence is not 1 statements. got={}", Statements.len());
+                let consequence = &Statements[0];
+                if let ast::Statement::ExpressionStatement{Token, Expression} = consequence {
+                    assert_eq!(true, testIdentifier(&Expression, String::from("x")));
+                } else {
+                    panic!("Statements[0] is not ast::Statement::ExpressionStatement. got={}", Statements[0]);
+                }
+            } else {
+                panic!("Consequence is not ast::Statement::BlockStatement. got={}", Consequence);
+            }
+
+            if let ast::Statement::BlockStatement{Token, Statements} = Alternative.as_ref() {
+                assert_eq!(1, Statements.len(), "Alternative is not 1 statements. got={}", Statements.len());
+                let alternative = &Statements[0];
+                if let ast::Statement::ExpressionStatement{Token, Expression} = alternative {
+                    assert_eq!(true, testIdentifier(&Expression, String::from("y")));
+                } else {
+                    panic!("Statements[0] is not ast::Statement::ExpressionStatement. got={}", Statements[0]);
+                }
+            } else {
+                panic!("Alternative is not ast::Statement::BlockStatement. got={}", Alternative);
+            }
+
+        } else {
+            panic!("Expression is not ast::Expression::IfExpression. got={}", Expression);
+        }
+    } else {
+        panic!("program.Statements[0] is not ast::Statement::ExpressionStatement. got={}", program.Statements[0]);
+    }
+}
+

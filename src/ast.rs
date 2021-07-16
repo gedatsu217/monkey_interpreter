@@ -5,6 +5,8 @@ pub enum Statement {
     LetStatement{Token: token::Token, Name: Identifier, Value: Expression},
     ReturnStatement{Token: token::Token, ReturnValue: Expression},
     ExpressionStatement{Token: token::Token, Expression: Expression},
+    BlockStatement{Token: token::Token, Statements: Vec<Statement>},
+    Nil,
 }
 
 impl fmt::Display for Statement {
@@ -21,7 +23,9 @@ impl Statement {
         match self {
             Statement::LetStatement{..} => {"".to_string()},
             Statement::ReturnStatement{..} => {"".to_string()},
-            Statement::ExpressionStatement{Token, Expression} => {Expression.into_string()}
+            Statement::ExpressionStatement{Token, Expression} => {Expression.into_string()},
+            Statement::BlockStatement{Token, Statements} => {Token.Literal.clone()},
+            Nil => {"".to_string()},
         }
     }
 }
@@ -44,7 +48,7 @@ pub enum Expression {
     PrefixExpression{Token: token::Token, Operator: String, Right: Box<Expression>},
     InfixExpression{Token: token::Token, Left: Box<Expression>, Operator: String, Right: Box<Expression>},
     Boolean{Token: token::Token, Value: bool},
-
+    IfExpression{Token: token::Token, Condition: Box<Expression>, Consequence: Box<Statement>, Alternative: Box<Statement>},
 }
 
 impl Expression {
@@ -56,6 +60,13 @@ impl Expression {
             Expression::PrefixExpression{Token, Operator, Right} => {String::from("(") + Operator + Right.into_string().as_str() + ")"},
             Expression::InfixExpression{Token, Left, Operator, Right} => {String::from("(") + Left.into_string().as_str() + " " + Operator + " " + Right.into_string().as_str() + ")"},
             Expression::Boolean{Token, Value} => {Token.Literal.clone()},
+            Expression::IfExpression{Token, Condition, Consequence, Alternative} => {
+                if let Statement::Nil = Alternative.as_ref() {
+                    String::from("if") + &Condition.into_string() + " " + &Consequence.into_string()
+                } else {
+                    String::from("if") + &Condition.into_string() + " " + &Consequence.into_string() + "else " + &Alternative.into_string()
+                }
+            }
         }
     }
 }

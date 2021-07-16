@@ -184,6 +184,7 @@ impl Parser {
             token::FALSE => self.parseBoolean(),
             token::LPAREN => self.parseGroupedExpression(),
             token::IF => self.parseIfExpression(),
+            token::FUNCTION => self.parseFunctionLiteral(),
             _ => {
                 let msg = format!("no prefix parse function for {} found", self.curToken.Type);
                 self.errors.push(msg);
@@ -362,5 +363,61 @@ impl Parser {
             Token: temp_token,
             Statements: temp_statements,
         }
+    }
+
+    fn parseFunctionLiteral(&mut self) -> ast::Expression {
+        let temp_token = self.curToken.clone();
+        if !self.expectPeek(token::LPAREN) {
+            return ast::Expression::Nil;
+        }
+        let temp_parameters = match self.parseFunctionParameters() {
+            Some(x) => x,
+            None => {
+                return ast::Expression::Nil;
+            }
+        };
+
+        if !self.expectPeek(token::LBRACE) {
+            return ast::Expression::Nil;
+        }
+
+        ast::Expression::FunctionLiteral {
+            Token: temp_token,
+            Parameters: temp_parameters,
+            Body: Box::new(self.parseBlockStatement()),
+        }
+    }
+
+    fn parseFunctionParameters(&mut self) -> Option<Vec<ast::Expression>> {
+        let mut identifiers: Vec<ast::Expression> = vec![];
+
+        if self.peekTokenIs(token::RPAREN) {
+            self.nextToken();
+            return Some(identifiers);
+        }
+
+        self.nextToken();
+
+        let ident = ast::Expression::Identifier(ast::Identifier {
+            Token: self.curToken.clone(),
+            Value: self.curToken.Literal.clone(),
+        });
+        identifiers.push(ident);
+
+        while self.peekTokenIs(token::COMMA) {
+            self.nextToken();
+            self.nextToken();
+            let ident = ast::Expression::Identifier(ast::Identifier {
+                Token: self.curToken.clone(),
+                Value: self.curToken.Literal.clone(),
+            });
+            identifiers.push(ident);
+        }
+
+        if !self.expectPeek(token::RPAREN) {
+            return None;
+        }
+
+        Some(identifiers)
     }
 }

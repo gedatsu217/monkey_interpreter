@@ -1212,3 +1212,185 @@ fn TestIfElseExpression() {
         );
     }
 }
+
+#[test]
+fn TestFunctionLiteralParsing() {
+    let input = String::from("fn(x,y) {x + y;}");
+    let l = lexer::New(input);
+    let mut p = l.New();
+    let program = p.ParseProgram();
+    p.checkParserErrors();
+
+    assert_eq!(
+        1,
+        program.Statements.len(),
+        "program.Statements does not contain 1 statements. got={}",
+        program.Statements.len()
+    );
+
+    let stmt = &program.Statements[0];
+    if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
+        if let ast::Expression::FunctionLiteral {
+            Token,
+            Parameters,
+            Body,
+        } = Expression
+        {
+            assert_eq!(
+                2,
+                Parameters.len(),
+                "function literal parameters wrong. want 2, got={}",
+                Parameters.len()
+            );
+            assert_eq!(
+                true,
+                testLiteralExpression(
+                    &Parameters[0],
+                    &ast::Expression::Identifier(ast::Identifier {
+                        Token: Token {
+                            Type: token::IDENT,
+                            Literal: String::from("x"),
+                        },
+                        Value: String::from("x")
+                    })
+                )
+            );
+            assert_eq!(
+                true,
+                testLiteralExpression(
+                    &Parameters[1],
+                    &ast::Expression::Identifier(ast::Identifier {
+                        Token: Token {
+                            Type: token::IDENT,
+                            Literal: String::from("y"),
+                        },
+                        Value: String::from("y")
+                    })
+                )
+            );
+
+            if let ast::Statement::BlockStatement { Token, Statements } = Body.as_ref() {
+                assert_eq!(
+                    1,
+                    Statements.len(),
+                    "Statements has not 1 statements. got={}",
+                    Statements.len()
+                );
+                let bodystmt = &Statements[0];
+                if let ast::Statement::ExpressionStatement { Token, Expression } = bodystmt {
+                    assert_eq!(
+                        true,
+                        testInfixExpression(
+                            &Expression,
+                            &ast::Expression::Identifier(ast::Identifier {
+                                Token: Token {
+                                    Type: token::IDENT,
+                                    Literal: String::from("x"),
+                                },
+                                Value: String::from("x")
+                            }),
+                            String::from("+"),
+                            &ast::Expression::Identifier(ast::Identifier {
+                                Token: Token {
+                                    Type: token::IDENT,
+                                    Literal: String::from("y"),
+                                },
+                                Value: String::from("y")
+                            })
+                        )
+                    );
+                } else {
+                    panic!(
+                        "function body stmt is not ast::Statement::ExpressionStatement. got={}",
+                        bodystmt
+                    );
+                }
+            } else {
+                panic!("Body is not ast::Statement::BlockStatement. got={}", Body);
+            }
+        } else {
+            panic!(
+                "Expression is not ast::Expression::FunctionLiteral. got={}",
+                Expression
+            );
+        }
+    } else {
+        panic!(
+            "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+            program.Statements[0]
+        );
+    }
+}
+
+#[test]
+fn TestFunctionParameterParsing() {
+    struct tests_struct {
+        input: String,
+        expectedParams: Vec<String>,
+    }
+
+    let tests = vec![
+        tests_struct {
+            input: String::from("fn() {};"),
+            expectedParams: vec![],
+        },
+        tests_struct {
+            input: String::from("fn(x) {};"),
+            expectedParams: vec![String::from("x")],
+        },
+        tests_struct {
+            input: String::from("fn(x, y, z) {};"),
+            expectedParams: vec![String::from("x"), String::from("y"), String::from("z")],
+        },
+    ];
+
+    for tt in tests.iter() {
+        let l = lexer::New(tt.input.clone());
+        let mut p = l.New();
+        let program = p.ParseProgram();
+        p.checkParserErrors();
+
+        let stmt = &program.Statements[0];
+        if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
+            if let ast::Expression::FunctionLiteral {
+                Token,
+                Parameters,
+                Body,
+            } = Expression
+            {
+                assert_eq!(
+                    Parameters.len(),
+                    tt.expectedParams.len(),
+                    "length parameters wrong. want {}, got={}",
+                    tt.expectedParams.len(),
+                    Parameters.len()
+                );
+                for (i, ident) in tt.expectedParams.iter().enumerate() {
+                    assert_eq!(
+                        true,
+                        testLiteralExpression(
+                            &Parameters[i],
+                            &ast::Expression::Identifier(ast::Identifier {
+                                Token: Token {
+                                    Type: token::IDENT,
+                                    Literal: ident.clone()
+                                },
+                                Value: ident.clone()
+                            })
+                        )
+                    );
+                }
+            } else {
+                panic!(
+                    "Expression is not ast::Expression::FunctionLiteral. got={}",
+                    Expression
+                );
+            }
+        } else {
+            panic!(
+                "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+                program.Statements[0]
+            );
+        }
+    }
+}

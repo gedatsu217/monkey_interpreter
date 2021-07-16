@@ -52,6 +52,12 @@ pub struct Identifier {
     pub Value: String,
 }
 
+impl Identifier {
+    fn into_string(&self) -> String {
+        self.Token.Literal.clone()
+    }
+}
+
 impl fmt::Display for Identifier {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write! {f, "Identifier{{Token: {}, Value: {}}}", self.Token, self.Value}
@@ -85,6 +91,11 @@ pub enum Expression {
         Condition: Box<Expression>,
         Consequence: Box<Statement>,
         Alternative: Box<Statement>,
+    },
+    FunctionLiteral {
+        Token: token::Token,
+        Parameters: Vec<Expression>,
+        Body: Box<Statement>,
     },
 }
 
@@ -130,6 +141,17 @@ impl Expression {
                         + "else "
                         + &Alternative.into_string()
                 }
+            }
+            Expression::FunctionLiteral {
+                Token,
+                Parameters,
+                Body,
+            } => {
+                let mut params = vec![];
+                for p in Parameters.iter() {
+                    params.push(p.into_string());
+                }
+                Token.Literal.clone() + "(" + &params.join(",") + ") " + &Body.into_string()
             }
         }
     }

@@ -19,6 +19,7 @@ static precedences: phf::Map<&'static str, i32> = phf_map! {
     "-" => SUM,
     "/" => PRODUCT,
     "*" => PRODUCT,
+    "(" => CALL,
 };
 
 pub struct Parser {
@@ -227,6 +228,10 @@ impl Parser {
                     self.nextToken();
                     left = self.parseInfixExpression(left);
                 }
+                token::LPAREN => {
+                    self.nextToken();
+                    left = self.parseCallExpression(left);
+                }
                 _ => {}
             }
         }
@@ -419,5 +424,36 @@ impl Parser {
         }
 
         Some(identifiers)
+    }
+
+    fn parseCallExpression(&mut self, function: ast::Expression) -> ast::Expression {
+        match self.parseCallArguments() {
+            Some(x) => ast::Expression::CallExpression {
+                Token: self.curToken.clone(),
+                Function: Box::new(function),
+                Arguments: x,
+            },
+            None => ast::Expression::Nil,
+        }
+    }
+
+    fn parseCallArguments(&mut self) -> Option<Vec<ast::Expression>> {
+        let mut args = vec![];
+        if self.peekTokenIs(token::RPAREN) {
+            self.nextToken();
+            return Some(args);
+        }
+        self.nextToken();
+        args.push(self.parseExpression(LOWEST));
+        while self.peekTokenIs(token::COMMA) {
+            self.nextToken();
+            self.nextToken();
+            args.push(self.parseExpression(LOWEST));
+        }
+
+        if !self.expectPeek(token::RPAREN) {
+            return None;
+        }
+        Some(args)
     }
 }

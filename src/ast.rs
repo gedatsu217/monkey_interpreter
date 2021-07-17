@@ -97,6 +97,11 @@ pub enum Expression {
         Parameters: Vec<Expression>,
         Body: Box<Statement>,
     },
+    CallExpression {
+        Token: token::Token,
+        Function: Box<Expression>,
+        Arguments: Vec<Expression>,
+    },
 }
 
 impl Expression {
@@ -151,7 +156,18 @@ impl Expression {
                 for p in Parameters.iter() {
                     params.push(p.into_string());
                 }
-                Token.Literal.clone() + "(" + &params.join(",") + ") " + &Body.into_string()
+                Token.Literal.clone() + "(" + &params.join(", ") + ") " + &Body.into_string()
+            }
+            Expression::CallExpression {
+                Token,
+                Function,
+                Arguments,
+            } => {
+                let mut args = vec![];
+                for a in Arguments.iter() {
+                    args.push(a.into_string());
+                }
+                Function.into_string() + "(" + &args.join(", ") + ")"
             }
         }
     }

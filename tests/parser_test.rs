@@ -827,7 +827,7 @@ fn TestOperatorPrecedenceParsing() {
         },
         tests_struct {
             input: String::from("3 + 4; -5 * 5"),
-            expected: String::from("(3+4)((-5) * 5)"),
+            expected: String::from("(3 + 4)((-5) * 5)"),
         },
         tests_struct {
             input: String::from("5 > 4 == 3 < 4"),
@@ -877,6 +877,18 @@ fn TestOperatorPrecedenceParsing() {
             input: String::from("!(true == true)"),
             expected: String::from("(!(true == true))"),
         },
+        tests_struct {
+            input: String::from("a + add(b * c) + d"),
+            expected: String::from("((a + add((b * c))) + d)"),
+        },
+        tests_struct {
+            input: String::from("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))"),
+            expected: String::from("add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
+        },
+        tests_struct {
+            input: String::from("add(a + b + c * d / f + g)"),
+            expected: String::from("add((((a + b) + ((c * d) / f)) + g))"),
+        },
     ];
 
     for tt in tests.iter() {
@@ -886,9 +898,11 @@ fn TestOperatorPrecedenceParsing() {
         p.checkParserErrors();
 
         let actual = program.into_string();
-        if actual != tt.expected {
-            println!("expected={}, got={}", tt.expected, actual);
-        }
+        assert_eq!(
+            actual, tt.expected,
+            "expected={}, got={}",
+            tt.expected, actual
+        );
     }
 }
 
@@ -1392,5 +1406,104 @@ fn TestFunctionParameterParsing() {
                 program.Statements[0]
             );
         }
+    }
+}
+
+#[test]
+fn TestCallExpressionParsing() {
+    let input = String::from("add(1, 2 * 3, 4 + 5);");
+    let l = lexer::New(input);
+    let mut p = l.New();
+    let program = p.ParseProgram();
+    p.checkParserErrors();
+
+    assert_eq!(
+        1,
+        program.Statements.len(),
+        "program.Statements does not contain 1 statements. got={}",
+        program.Statements.len()
+    );
+
+    let stmt = &program.Statements[0];
+    if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
+        if let ast::Expression::CallExpression {
+            Token,
+            Function,
+            Arguments,
+        } = Expression
+        {
+            assert_eq!(true, testIdentifier(Function, String::from("add")));
+            assert_eq!(
+                3,
+                Arguments.len(),
+                "wrong length of arguments. got={}",
+                Arguments.len()
+            );
+            assert_eq!(
+                true,
+                testLiteralExpression(
+                    &Arguments[0],
+                    &ast::Expression::IntergerLiteral {
+                        Token: Token {
+                            Type: token::INT,
+                            Literal: String::from("1")
+                        },
+                        Value: 1
+                    }
+                )
+            );
+            assert_eq!(
+                true,
+                testInfixExpression(
+                    &Arguments[1],
+                    &ast::Expression::IntergerLiteral {
+                        Token: Token {
+                            Type: token::INT,
+                            Literal: String::from("2")
+                        },
+                        Value: 2
+                    },
+                    String::from("*"),
+                    &ast::Expression::IntergerLiteral {
+                        Token: Token {
+                            Type: token::INT,
+                            Literal: String::from("3")
+                        },
+                        Value: 3
+                    }
+                )
+            );
+            assert_eq!(
+                true,
+                testInfixExpression(
+                    &Arguments[2],
+                    &ast::Expression::IntergerLiteral {
+                        Token: Token {
+                            Type: token::INT,
+                            Literal: String::from("4")
+                        },
+                        Value: 4
+                    },
+                    String::from("+"),
+                    &ast::Expression::IntergerLiteral {
+                        Token: Token {
+                            Type: token::INT,
+                            Literal: String::from("5")
+                        },
+                        Value: 5
+                    }
+                )
+            );
+        } else {
+            panic!(
+                "Expression is not ast::Expression::CallExpression. got={}",
+                Expression
+            );
+        }
+    } else {
+        panic!(
+            "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
+            program.Statements[0]
+        );
     }
 }

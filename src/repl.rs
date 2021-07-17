@@ -1,4 +1,4 @@
-use crate::{lexer, token};
+use crate::{lexer, repl, token};
 use std::io;
 
 const PROMPT: &str = ">> ";
@@ -8,11 +8,21 @@ pub fn Start() {
     loop {
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("Failing in input");
-        let mut l = lexer::New(input);
-        let mut tok = l.NextToken();
-        while tok.Type != token::EOF {
-            println!("{:?}", tok);
-            tok = l.NextToken();
+        let l = lexer::New(input);
+        let mut p = l.New();
+        let program = p.ParseProgram();
+        if p.Errors().len() != 0 {
+            printParserErrors(p.Errors());
+            continue;
         }
+        println!("{}", program.into_string());
+    }
+}
+
+fn printParserErrors(errors: &Vec<String>) {
+    println!("Error!");
+    println!(" parser errors: ");
+    for msg in errors.iter() {
+        println!("{}", msg);
     }
 }

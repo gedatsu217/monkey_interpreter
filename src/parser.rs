@@ -117,7 +117,7 @@ impl Parser {
         }
     }
 
-    fn Errors(&self) -> &Vec<String> {
+    pub fn Errors(&self) -> &Vec<String> {
         &self.errors
     }
 
@@ -196,7 +196,6 @@ impl Parser {
         };
 
         while !self.peekTokenIs(token::SEMICOLON) && precedence < self.peekPrecedence() {
-            println!("{}", self.peekToken);
             match self.peekToken.Type {
                 token::PLUS => {
                     self.nextToken();

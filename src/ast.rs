@@ -38,10 +38,25 @@ impl fmt::Display for Statement {
 impl Statement {
     pub fn into_string(&self) -> String {
         match self {
-            Statement::LetStatement { .. } => "".to_string(),
-            Statement::ReturnStatement { .. } => "".to_string(),
+            Statement::LetStatement { Token, Name, Value } => {
+                Token.Literal.clone()
+                    + " "
+                    + &Name.into_string()
+                    + " = "
+                    + &Value.into_string()
+                    + ";"
+            }
+            Statement::ReturnStatement { Token, ReturnValue } => {
+                Token.Literal.clone() + " " + &ReturnValue.into_string() + ";"
+            }
             Statement::ExpressionStatement { Token, Expression } => Expression.into_string(),
-            Statement::BlockStatement { Token, Statements } => Token.Literal.clone(),
+            Statement::BlockStatement { Token, Statements } => {
+                let mut buf = "".to_string();
+                for s in Statements.iter() {
+                    buf += &s.into_string();
+                }
+                buf
+            }
             Nil => "".to_string(),
         }
     }

@@ -64,14 +64,14 @@ fn TestLetStatements() {
         );
 
         let stmt = &program.Statements[0];
-        if !testLetStatement(stmt, &tt.expectedIdentifier) {
-            panic!("stmt not expected");
-        }
-        println!("{}", stmt);
+        assert_eq!(true, testLetStatement(stmt, &tt.expectedIdentifier));
+
         if let ast::Statement::LetStatement { Token, Name, Value } = stmt {
-            if !testLiteralExpression(Value, &tt.expectedValue) {
-                panic!("Value not expected");
-            }
+            assert_eq!(
+                true,
+                testLiteralExpression(Value, &tt.expectedValue),
+                "Value not expected"
+            );
         } else {
             panic!("stmt not ast::Statement::LetStatement");
         }
@@ -195,22 +195,16 @@ fn TestIdentifierExpression() {
 
     if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
         if let ast::Expression::Identifier(x) = Expression {
-            if x.Value != String::from("foobar") {
-                println!("x.Value not foobar. got={}", x.Value);
-            }
-            if x.Token.Literal != String::from("foobar") {
-                println!("x.Token.Literal not foobar. got={}", x.Token.Literal);
-            }
+            assert_eq!(x.Value, String::from("foobar"));
+            assert_eq!(x.Token.Literal, String::from("foobar"))
         } else {
-            println!("exp not ast::Expression::Identifier. got={}", Expression);
-            panic!();
+            panic!("exp not ast::Expression::Identifier. got={}", Expression);
         }
     } else {
-        println!(
+        panic!(
             "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
             program.Statements[0]
         );
-        panic!();
     }
 }
 
@@ -233,25 +227,19 @@ fn TestIntegerLiteralExpression() {
 
     if let ast::Statement::ExpressionStatement { Token, Expression } = stmt {
         if let ast::Expression::IntergerLiteral { Token, Value } = Expression {
-            if *Value != 5 {
-                println!("Value not foobar. got={}", Value);
-            }
-            if Token.Literal != String::from("5") {
-                println!("Token.Literal not 5. got={}", Token.Literal);
-            }
+            assert_eq!(*Value, 5);
+            assert_eq!(Token.Literal, String::from("5"))
         } else {
-            println!(
+            panic!(
                 "exp not ast::Expression::IntegerLiteral. got={}",
                 Expression
             );
-            panic!();
         }
     } else {
-        println!(
+        panic!(
             "program.Statements[0] is not ast::Statement::ExpressionStatement. got={}",
             program.Statements[0]
         );
-        panic!();
     }
 }
 

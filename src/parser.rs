@@ -92,7 +92,7 @@ impl Parser {
             Value: self.parseExpression(LOWEST),
         };
 
-        while !self.curTokenIs(token::SEMICOLON) {
+        if self.peekTokenIs(token::SEMICOLON) {
             self.nextToken();
         }
 
@@ -148,9 +148,11 @@ impl Parser {
             Token: token_temp,
             ReturnValue: self.parseExpression(LOWEST),
         };
-        while !self.curTokenIs(token::SEMICOLON) {
+
+        if self.peekTokenIs(token::SEMICOLON) {
             self.nextToken();
         }
+
         Some(stmt)
     }
 

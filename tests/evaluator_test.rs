@@ -12,6 +12,17 @@ fn TestEvalIntegerExpression() {
         tests_struct{input: String::from("10"), expected: 10},
         tests_struct{input: String::from("-5"), expected: -5},
         tests_struct{input: String::from("-10"), expected: -10},
+        tests_struct{input: String::from("5 + 5 + 5 + 5 - 10"), expected: 10},
+        tests_struct{input: String::from("2 * 2 * 2 * 2 * 2"), expected: 32},
+        tests_struct{input: String::from("-50 + 100 - 50"), expected: 0},
+        tests_struct{input: String::from("5 * 2 + 10"), expected: 20},
+        tests_struct{input: String::from("5 + 2 * 10"), expected: 25},
+        tests_struct{input: String::from("20 + 2 * -10"), expected: 0},
+        tests_struct{input: String::from("50 / 2 * 2 + 10"), expected: 60},
+        tests_struct{input: String::from("2 * (5 + 10)"), expected: 30},
+        tests_struct{input: String::from("3 * 3 * 3 + 10"), expected: 37},
+        tests_struct{input: String::from("3 * (3 * 3) + 10"), expected: 37},
+        tests_struct{input: String::from("(5 + 10 * 2 + 15 / 3) * 2 - 10"), expected: 50},
     ];
 
     for tt in tests.iter() {
@@ -52,6 +63,23 @@ fn TestEvalBooleanExpression() {
     let tests = vec![
         tests_struct{input: String::from("true"), expected: true},
         tests_struct{input: String::from("false"), expected: false},
+        tests_struct{input: String::from("1 < 2"), expected: true},
+        tests_struct{input: String::from("1 > 2"), expected: false},
+        tests_struct{input: String::from("1 < 1"), expected: false},
+        tests_struct{input: String::from("1 > 1"), expected: false},
+        tests_struct{input: String::from("1 == 1"), expected: true},
+        tests_struct{input: String::from("1 != 1"), expected: false},
+        tests_struct{input: String::from("1 == 2"), expected: false},
+        tests_struct{input: String::from("1 != 2"), expected: true},
+        tests_struct{input: String::from("true == true"), expected: true},
+        tests_struct{input: String::from("false == false"), expected: true},
+        tests_struct{input: String::from("true == false"), expected: false},
+        tests_struct{input: String::from("true != false"), expected: true},
+        tests_struct{input: String::from("false != true"), expected: true},
+        tests_struct{input: String::from("(1 < 2) == true"), expected: true},
+        tests_struct{input: String::from("(1 < 2) == false"), expected: false},
+        tests_struct{input: String::from("(1 > 2) == true"), expected: false},
+        tests_struct{input: String::from("(1 > 2) == false"), expected: true},
     ];
 
     for tt in tests.iter() {
@@ -74,6 +102,7 @@ fn testBooleanObject(obj: &object::Object, expected: bool) -> bool {
     }
 }
 
+#[test]
 fn TestBangOperator() {
     struct tests_struct {
         input: String,

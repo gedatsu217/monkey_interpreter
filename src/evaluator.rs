@@ -26,6 +26,19 @@ fn evalExpression(exp: &ast::Expression) -> Option<object::Object> {
                 None => None,
             }
         },
+        ast::Expression::InfixExpression{Token, Left, Operator, Right} => {
+            let left = evalExpression(Left);
+            let right = evalExpression(Right);
+            match left {
+                Some(x) => {
+                    match right {
+                        Some(y) => evalInfixExpression(Operator, x, y),
+                        None => None,
+                    }
+                }
+                None => None,
+            }
+        },
         _ => None
     }
 }
@@ -52,5 +65,36 @@ fn evalMinusPrefixOperatorExpression(right: object::Object) -> Option<object::Ob
         Some(object::Object::Integer{Value: -Value})
     } else {
         None
+    }
+}
+
+fn evalInfixExpression(operator: &String, left: object::Object, right: object::Object) -> Option<object::Object> {
+    if let object::Object::Integer{Value: lv} = left {
+        if let object::Object::Integer{Value: rv} = right {
+            return evalIntegerInfixExpression(operator, lv, rv)
+        }
+    }
+
+    if *operator == String::from("==") {
+        return if left == right {Some(TRUE)} else {Some(FALSE)}
+    } 
+    else if *operator == String::from("!=") {
+        return if left != right {Some(TRUE)} else {Some(FALSE)}
+    }
+
+    None
+}
+
+fn evalIntegerInfixExpression(operator: &String, left: i64, right:i64) -> Option<object::Object> {
+    match operator.as_ref() {
+        "+" => Some(object::Object::Integer{Value: left + right}),
+        "-" => Some(object::Object::Integer{Value: left - right}),
+        "*" => Some(object::Object::Integer{Value: left * right}),
+        "/" => Some(object::Object::Integer{Value: left / right}),
+        "<" => if left < right {Some(TRUE)} else {Some(FALSE)},
+        ">" => if left > right {Some(TRUE)} else {Some(FALSE)},
+        "==" => if left == right {Some(TRUE)} else {Some(FALSE)},
+        "!=" => if left != right {Some(TRUE)} else {Some(FALSE)},
+        _ => None,
     }
 }

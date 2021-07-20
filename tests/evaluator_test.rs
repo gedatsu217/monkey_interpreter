@@ -40,3 +40,33 @@ fn testIntegerObject(obj: &object::Object, expected: i64) -> bool {
         false
     }
 }
+
+#[test]
+fn TestEvalBooleanExpression() {
+    struct tests_struct {
+        input: String,
+        expected: bool,
+    }
+    let tests = vec![
+        tests_struct{input: String::from("true"), expected: true},
+        tests_struct{input: String::from("false"), expected: false},
+    ];
+
+    for tt in tests.iter() {
+        let evaluated = testEval(&tt.input).unwrap();
+        assert_eq!(true, testBooleanObject(&evaluated, tt.expected));
+    }
+}
+fn testBooleanObject(obj: &object::Object, expected: bool) -> bool {
+    if let object::Object::Boolean{Value} = obj {
+        if *Value != expected {
+            println!("object has wrong value. got={}, want={}", Value, expected);
+            false
+        } else {
+            true
+        }
+    } else {
+        println!("object is not Boolean. got={}", obj);
+        false
+    }
+}

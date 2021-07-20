@@ -1,4 +1,4 @@
-use crate::{lexer, repl, token};
+use crate::{lexer, repl, token, evaluator};
 use std::io;
 
 const PROMPT: &str = ">> ";
@@ -15,7 +15,10 @@ pub fn Start() {
             printParserErrors(p.Errors());
             continue;
         }
-        println!("{}", program.into_string());
+        let evaluated = evaluator::Eval(program);
+        if let Some(x) = evaluated {
+            println!("{}", x.Inspect());
+        }
     }
 }
 

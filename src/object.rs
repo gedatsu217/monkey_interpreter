@@ -14,7 +14,7 @@ pub enum Object {
 }
 
 impl Object {
-    fn Type(&self) -> ObjectType {
+    pub fn Type(&self) -> ObjectType {
         match self {
             Object::Integer{..} => INTEGER_OBJ,
             Object::Boolean{..} => BOOLEAN_OBJ,
@@ -22,7 +22,7 @@ impl Object {
         }
     }
 
-    fn Inspect(&self) -> String {
+    pub fn Inspect(&self) -> String {
         match self {
             Object::Integer{Value} => format!("{}", Value),
             Object::Boolean{Value} => format!("{}", Value),

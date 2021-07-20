@@ -10,6 +10,8 @@ fn TestEvalIntegerExpression() {
     let tests = vec![
         tests_struct{input: String::from("5"), expected: 5},
         tests_struct{input: String::from("10"), expected: 10},
+        tests_struct{input: String::from("-5"), expected: -5},
+        tests_struct{input: String::from("-10"), expected: -10},
     ];
 
     for tt in tests.iter() {
@@ -57,6 +59,7 @@ fn TestEvalBooleanExpression() {
         assert_eq!(true, testBooleanObject(&evaluated, tt.expected));
     }
 }
+
 fn testBooleanObject(obj: &object::Object, expected: bool) -> bool {
     if let object::Object::Boolean{Value} = obj {
         if *Value != expected {
@@ -68,5 +71,25 @@ fn testBooleanObject(obj: &object::Object, expected: bool) -> bool {
     } else {
         println!("object is not Boolean. got={}", obj);
         false
+    }
+}
+
+fn TestBangOperator() {
+    struct tests_struct {
+        input: String,
+        expected: bool,
+    }
+    let tests = vec![
+        tests_struct{input: String::from("!true"), expected: false},
+        tests_struct{input: String::from("!false"), expected: true},
+        tests_struct{input: String::from("!5"), expected: false},
+        tests_struct{input: String::from("!!true"), expected: true},
+        tests_struct{input: String::from("!!false"), expected: false},
+        tests_struct{input: String::from("!!5"), expected: true},
+    ];
+
+    for tt in tests.iter() {
+        let evaluated = testEval(&tt.input).unwrap();
+        assert_eq!(true, testBooleanObject(&evaluated, tt.expected));
     }
 }

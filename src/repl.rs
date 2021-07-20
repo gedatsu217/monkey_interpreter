@@ -18,6 +18,8 @@ pub fn Start() {
         let evaluated = evaluator::Eval(program);
         if let Some(x) = evaluated {
             println!("{}", x.Inspect());
+        } else {
+            println!("semantics error");
         }
     }
 }

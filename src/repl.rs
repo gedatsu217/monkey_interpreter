@@ -1,4 +1,4 @@
-use crate::{lexer, repl, token, evaluator};
+use crate::{lexer, repl, token, evaluator, object};
 use std::io;
 
 const PROMPT: &str = ">> ";
@@ -16,10 +16,10 @@ pub fn Start() {
             continue;
         }
         let evaluated = evaluator::Eval(program);
-        if let Some(x) = evaluated {
-            println!("{}", x.Inspect());
-        } else {
+        if let object::Object::Null = evaluated {
             println!("semantics error");
+        } else {
+            println!("{}", evaluated.Inspect());
         }
     }
 }

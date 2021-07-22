@@ -27,13 +27,13 @@ fn TestEvalIntegerExpression() {
 
     for tt in tests.iter() {
         let evaluated = testEval(&tt.input);
-        let evaluated = evaluated.unwrap();
+        let evaluated = evaluated;
         assert_eq!(true, testIntegerObject(&evaluated, tt.expected));
     }
 
 }
 
-fn testEval(input: &String) -> Option<object::Object> {
+fn testEval(input: &String) -> object::Object {
     let l = lexer::New(input.clone());
     let mut p = l.New();
     let program = p.ParseProgram();
@@ -83,7 +83,7 @@ fn TestEvalBooleanExpression() {
     ];
 
     for tt in tests.iter() {
-        let evaluated = testEval(&tt.input).unwrap();
+        let evaluated = testEval(&tt.input);
         assert_eq!(true, testBooleanObject(&evaluated, tt.expected));
     }
 }
@@ -118,7 +118,7 @@ fn TestBangOperator() {
     ];
 
     for tt in tests.iter() {
-        let evaluated = testEval(&tt.input).unwrap();
+        let evaluated = testEval(&tt.input);
         assert_eq!(true, testBooleanObject(&evaluated, tt.expected));
     }
 }
@@ -141,7 +141,7 @@ fn TestIfElseExpressions() {
     ];
 
     for tt in tests.iter() {
-        let evaluated = testEval(&tt.input).unwrap();
+        let evaluated = testEval(&tt.input);
         if let object::Object::Integer{Value} = tt.expected {
             assert_eq!(true, testIntegerObject(&evaluated, Value));
         } else {
@@ -156,5 +156,32 @@ fn testNullObject(obj: &object::Object) -> bool{
     } else {
         println!("object is not NULL. got={}", obj);
         false
+    }
+}
+
+#[test]
+fn TestReturnStatements() {
+    struct tests_struct {
+        input: String,
+        expected: i64,
+    }
+
+    let tests = vec![
+        tests_struct{input: String::from("return 10;"), expected: 10},
+        tests_struct{input: String::from("return 10; 9"), expected: 10},
+        tests_struct{input: String::from("return 2 * 5; 9"), expected: 10},
+        tests_struct{input: String::from("9; return 2 * 5; 9;"), expected: 10},
+        tests_struct{input: String::from("\
+        if (10 > 1) {
+            if (10 > 1) {
+                return 10;
+            }
+            return 1;
+        }"),expected: 10},
+    ];
+
+    for tt in tests.iter() {
+        let evaluated = testEval(&tt.input);
+        assert_eq!(true, testIntegerObject(&evaluated, tt.expected));
     }
 }

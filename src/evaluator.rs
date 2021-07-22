@@ -5,14 +5,23 @@ const FALSE: object::Object = object::Object::Boolean{Value: false};
 const NULL: object::Object = object::Object::Null;
 
 pub fn Eval(node: ast::Program) -> Option<object::Object> {
+    evalStatements(&node.Statements)
+}
+
+fn evalStatements(stmts: &Vec<ast::Statement>) -> Option<object::Object> {
     let mut result = None;
-    for statement in node.Statements.iter() {
-        result = match statement {
-            ast::Statement::ExpressionStatement{Token, Expression} => evalExpression(Expression),
-            _ => None,
-        }
+    for statement in stmts.iter() {
+        result = evalStatement(statement);
     }
     result
+}
+
+fn evalStatement(stmt: &ast::Statement) -> Option<object::Object> {
+    match stmt {
+        ast::Statement::ExpressionStatement{Token, Expression} => evalExpression(Expression),
+        ast::Statement::BlockStatement{Token, Statements} => evalStatements(Statements),
+        _ => None,
+    }
 }
 
 fn evalExpression(exp: &ast::Expression) -> Option<object::Object> {
@@ -38,6 +47,9 @@ fn evalExpression(exp: &ast::Expression) -> Option<object::Object> {
                 }
                 None => None,
             }
+        },
+        ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} => {
+            evalIfExpression(exp)
         },
         _ => None
     }
@@ -96,5 +108,30 @@ fn evalIntegerInfixExpression(operator: &String, left: i64, right:i64) -> Option
         "==" => if left == right {Some(TRUE)} else {Some(FALSE)},
         "!=" => if left != right {Some(TRUE)} else {Some(FALSE)},
         _ => None,
+    }
+}
+
+fn evalIfExpression(ie: &ast::Expression) -> Option<object::Object> {
+    if let ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} = ie {
+        let condition = evalExpression(Condition).unwrap();
+        if isTruthy(&condition) {
+            return evalStatement(Consequence);
+        } 
+        if let ast::Statement::Nil = Alternative.as_ref() {
+            return Some(object::Object::Null);
+        } else {
+            return evalStatement(Alternative);
+        }
+    } else {
+        panic!("ie is not ast::Expression::IfExpression. got={}", ie);
+    }
+}
+
+fn isTruthy(obj: &object::Object) -> bool {
+    match *obj {
+        object::Object::Null => false,
+        TRUE => true,
+        FALSE => false,
+        _ => true,
     }
 }

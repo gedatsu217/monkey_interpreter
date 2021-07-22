@@ -1,5 +1,5 @@
 extern crate monkey_interpreter;
-use monkey_interpreter::{lexer, object, parser, evaluator};
+use monkey_interpreter::{lexer, object, parser, evaluator, ast};
 
 #[test]
 fn TestEvalIntegerExpression() {
@@ -120,5 +120,41 @@ fn TestBangOperator() {
     for tt in tests.iter() {
         let evaluated = testEval(&tt.input).unwrap();
         assert_eq!(true, testBooleanObject(&evaluated, tt.expected));
+    }
+}
+
+#[test]
+fn TestIfElseExpressions() {
+    struct tests_struct {
+        input: String,
+        expected: object::Object,
+    }
+
+    let tests = vec![
+        tests_struct{input: String::from("if (true) {10}"), expected: object::Object::Integer{Value: 10}},
+        tests_struct{input: String::from("if (false) {10}"), expected: object::Object::Null},
+        tests_struct{input: String::from("if (1) {10}"), expected: object::Object::Integer{Value: 10}},
+        tests_struct{input: String::from("if (1 < 2) {10}"), expected: object::Object::Integer{Value: 10}},
+        tests_struct{input: String::from("if (1 > 2) {10}"), expected: object::Object::Null},
+        tests_struct{input: String::from("if (1 > 2) {10} else {20}"), expected: object::Object::Integer{Value: 20}},
+        tests_struct{input: String::from("if (1 < 2) {10} else {20}"), expected: object::Object::Integer{Value: 10}},
+    ];
+
+    for tt in tests.iter() {
+        let evaluated = testEval(&tt.input).unwrap();
+        if let object::Object::Integer{Value} = tt.expected {
+            assert_eq!(true, testIntegerObject(&evaluated, Value));
+        } else {
+            assert_eq!(true, testNullObject(&evaluated));
+        }
+    }
+}
+
+fn testNullObject(obj: &object::Object) -> bool{
+    if let object::Object::Null = obj {
+        true
+    } else {
+        println!("object is not NULL. got={}", obj);
+        false
     }
 }

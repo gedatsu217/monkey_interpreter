@@ -185,3 +185,38 @@ fn TestReturnStatements() {
         assert_eq!(true, testIntegerObject(&evaluated, tt.expected));
     }
 }
+
+#[test]
+fn TestErrorHandling() {
+    struct tests_struct {
+        input: String,
+        expected: String,
+    }
+
+    let tests = vec![
+        tests_struct{input: String::from("5 + true;"), expected: String::from("type mismatch: INTEGER + BOOLEAN")},
+        tests_struct{input: String::from("5 + true; 5;"), expected: String::from("type mismatch: INTEGER + BOOLEAN")},
+        tests_struct{input: String::from("-true;"), expected: String::from("unknown operator: -BOOLEAN")},
+        tests_struct{input: String::from("true + false;"), expected: String::from("unknown operator: BOOLEAN + BOOLEAN")},
+        tests_struct{input: String::from("5; true + false; 5"), expected: String::from("unknown operator: BOOLEAN + BOOLEAN")},
+        tests_struct{input: String::from("if (10 > 1) {true + false; }"), expected: String::from("unknown operator: BOOLEAN + BOOLEAN")},
+        tests_struct{input: String::from("\
+        if (10 > 1) {
+            if (10 > 1) {
+                return true + false;
+            }
+            return 1;
+        }
+        "), expected: String::from("unknown operator: BOOLEAN + BOOLEAN")},
+    ];
+
+    for tt in tests.iter() {
+        let evaluated = testEval(&tt.input);
+        if let object::Object::Error{Message} = evaluated {
+            assert_eq!(tt.expected, Message);
+        } else {
+            println!("no error object returned. got={}", evaluated);
+            continue;
+        }
+    }
+}

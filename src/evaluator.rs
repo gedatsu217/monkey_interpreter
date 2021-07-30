@@ -15,6 +15,8 @@ fn evalStatements(stmts: &Vec<ast::Statement>) -> object::Object {
         
         if let object::Object::ReturnValue{Value} = result {
             return *Value;
+        } else if let object::Object::Error{Message} = &result {
+            return result;
         }
     }
     result
@@ -26,6 +28,7 @@ fn evalStatement(stmt: &ast::Statement) -> object::Object {
         ast::Statement::BlockStatement{Token, Statements} => evalBlockStatement(stmt),
         ast::Statement::ReturnStatement{Token, ReturnValue} => {
             let val = evalExpression(ReturnValue);
+            if isError(&val) {return val;}
             object::Object::ReturnValue{Value: Box::new(val)}
         },
         _ => object::Object::Null,
@@ -38,6 +41,7 @@ fn evalExpression(exp: &ast::Expression) -> object::Object {
         ast::Expression::Boolean{Token, Value} => if *Value {TRUE} else {FALSE},
         ast::Expression::PrefixExpression{Token, Operator, Right} => {
             let right = evalExpression(Right);
+            if isError(&right) {return right}
             if let object::Object::Null = right {
                 object::Object::Null
             } else {
@@ -46,7 +50,9 @@ fn evalExpression(exp: &ast::Expression) -> object::Object {
         },
         ast::Expression::InfixExpression{Token, Left, Operator, Right} => {
             let left = evalExpression(Left);
+            if isError(&left) {return left;}
             let right = evalExpression(Right);
+            if isError(&right) {return right;}
             evalInfixExpression(Operator, left, right)
         },
         ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} => {
@@ -60,7 +66,7 @@ fn evalPrefixExpression(operator: &String, right: object::Object) -> object::Obj
     match operator.as_str() {
         "!" => evalBangOperatorExpression(right),
         "-" => evalMinusPrefixOperatorExpression(right),
-        _ => object::Object::Null
+        _ => newError(format!("unknown operator: {}{}", operator, right.Type())),
     }
 }
 
@@ -77,7 +83,7 @@ fn evalMinusPrefixOperatorExpression(right: object::Object) -> object::Object {
     if let object::Object::Integer{Value} = right {
         object::Object::Integer{Value: -Value}
     } else {
-        object::Object::Null
+        newError(format!("unknown operator: -{}", right.Type()))
     }
 }
 
@@ -95,7 +101,11 @@ fn evalInfixExpression(operator: &String, left: object::Object, right: object::O
         return if left != right {TRUE} else {FALSE}
     }
 
-    object::Object::Null
+    if left.Type() != right.Type() {
+        return newError(format!("type mismatch: {} {} {}", left.Type(), operator, right.Type()));
+    }
+
+    newError(format!("unknown operator: {} {} {}", left.Type(), operator, right.Type()))
 }
 
 fn evalIntegerInfixExpression(operator: &String, left: i64, right:i64) -> object::Object {
@@ -108,13 +118,14 @@ fn evalIntegerInfixExpression(operator: &String, left: i64, right:i64) -> object
         ">" => if left > right {TRUE} else {FALSE},
         "==" => if left == right {TRUE} else {FALSE},
         "!=" => if left != right {TRUE} else {FALSE},
-        _ => object::Object::Null,
+        _ => newError(format!("unknown operator: {} {} {}", object::INTEGER_OBJ, operator, object::INTEGER_OBJ)),
     }
 }
 
 fn evalIfExpression(ie: &ast::Expression) -> object::Object {
     if let ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} = ie {
         let condition = evalExpression(Condition);
+        if isError(&condition) {return condition;}
         if isTruthy(&condition) {
             return evalStatement(Consequence);
         } 
@@ -143,12 +154,23 @@ fn evalBlockStatement(block: &ast::Statement) -> object::Object {
         for statement in Statements.iter() {
             result = evalStatement(statement);
 
-            if result != object::Object::Null && result.Type() == object::RETURN_VALUE_OBJ{
-                return result;
+            if result != object::Object::Null {
+                let rt = result.Type();
+                if rt == object::RETURN_VALUE_OBJ || rt == object::ERROR_OBJ {
+                    return result;
+                }
             }
         }
         result
     } else {
         object::Object::Null
     }
+}
+
+fn newError(format: String) -> object::Object {
+    object::Object::Error{Message: format}
+}
+
+fn isError(obj: &object::Object) -> bool {
+    obj.Type() == object::ERROR_OBJ
 }

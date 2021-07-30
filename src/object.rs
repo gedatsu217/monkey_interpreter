@@ -6,12 +6,14 @@ pub const BOOLEAN_OBJ: ObjectType = "BOOLEAN";
 pub const INTEGER_OBJ: ObjectType = "INTEGER";
 pub const NULL_OBJ: ObjectType = "NULL";
 pub const RETURN_VALUE_OBJ: ObjectType = "RETURN_VALUE";
+pub const ERROR_OBJ: ObjectType = "ERROR";
 
 #[derive(PartialEq, Eq)]
 pub enum Object {
     Integer{Value: i64},
     Boolean{Value: bool},
     ReturnValue{Value: Box<Object>},
+    Error{Message: String},
     Null,
 }
 
@@ -21,6 +23,7 @@ impl Object {
             Object::Integer{..} => INTEGER_OBJ,
             Object::Boolean{..} => BOOLEAN_OBJ,
             Object::ReturnValue{..} => RETURN_VALUE_OBJ,
+            Object::Error{..} => ERROR_OBJ,
             Object::Null => NULL_OBJ,
         }
     }
@@ -30,6 +33,7 @@ impl Object {
             Object::Integer{Value} => format!("{}", Value),
             Object::Boolean{Value} => format!("{}", Value),
             Object::ReturnValue{Value} => Value.Inspect(),
+            Object::Error{Message} => format!{"ERROR: {}", Message},
             Object::Null => String::from("null"),
         }
     }
@@ -52,6 +56,11 @@ impl fmt::Display for Object {
                 f,
                 "Object::ReturnValue{{Value: {}}}",
                 Value
+            },
+            Object::Error{Message} => write! {
+                f,
+                "Object::Error{{Message: {}}}",
+                Message
             },
             Object::Null => write! {
                 f,

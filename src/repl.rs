@@ -1,10 +1,11 @@
-use crate::{lexer, repl, token, evaluator, object};
+use crate::{evaluator, lexer, object, repl, token};
 use std::io;
 
 const PROMPT: &str = ">> ";
 
 pub fn Start() {
     println!(">> ");
+    let mut env = object::NewEnvironment();
     loop {
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("Failing in input");
@@ -15,7 +16,7 @@ pub fn Start() {
             printParserErrors(p.Errors());
             continue;
         }
-        let evaluated = evaluator::Eval(program);
+        let evaluated = evaluator::Eval(program, &mut env);
         if let object::Object::Null = evaluated {
             println!("semantics error");
         } else {

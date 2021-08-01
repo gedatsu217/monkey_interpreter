@@ -1,64 +1,104 @@
 use crate::{ast, object};
 
-const TRUE: object::Object = object::Object::Boolean{Value: true};
-const FALSE: object::Object = object::Object::Boolean{Value: false};
+const TRUE: object::Object = object::Object::Boolean { Value: true };
+const FALSE: object::Object = object::Object::Boolean { Value: false };
 const NULL: object::Object = object::Object::Null;
 
-pub fn Eval(node: ast::Program) -> object::Object {
-    evalStatements(&node.Statements)
+pub fn Eval(node: ast::Program, env: &mut object::Environment) -> object::Object {
+    evalStatements(&node.Statements, env)
 }
 
-fn evalStatements(stmts: &Vec<ast::Statement>) -> object::Object {
+fn evalStatements(stmts: &Vec<ast::Statement>, env: &mut object::Environment) -> object::Object {
     let mut result = object::Object::Null;
     for statement in stmts.iter() {
-        result = evalStatement(statement);
-        
-        if let object::Object::ReturnValue{Value} = result {
+        result = evalStatement(statement, env);
+
+        if let object::Object::ReturnValue { Value } = result {
             return *Value;
-        } else if let object::Object::Error{Message} = &result {
+        } else if let object::Object::Error { Message } = &result {
             return result;
         }
     }
     result
 }
 
-fn evalStatement(stmt: &ast::Statement) -> object::Object {
+fn evalStatement(stmt: &ast::Statement, env: &mut object::Environment) -> object::Object {
     match stmt {
-        ast::Statement::ExpressionStatement{Token, Expression} => evalExpression(Expression),
-        ast::Statement::BlockStatement{Token, Statements} => evalBlockStatement(stmt),
-        ast::Statement::ReturnStatement{Token, ReturnValue} => {
-            let val = evalExpression(ReturnValue);
-            if isError(&val) {return val;}
-            object::Object::ReturnValue{Value: Box::new(val)}
-        },
+        ast::Statement::ExpressionStatement { Token, Expression } => {
+            evalExpression(Expression, env)
+        }
+        ast::Statement::BlockStatement { Token, Statements } => evalBlockStatement(stmt, env),
+        ast::Statement::ReturnStatement { Token, ReturnValue } => {
+            let val = evalExpression(ReturnValue, env);
+            if isError(&val) {
+                return val;
+            }
+            object::Object::ReturnValue {
+                Value: Box::new(val),
+            }
+        }
+        ast::Statement::LetStatement { Token, Name, Value } => {
+            let val = evalExpression(Value, env);
+            if isError(&val) {
+                return val;
+            }
+            env.Set(&Name.Value, val)
+        }
         _ => object::Object::Null,
     }
 }
 
-fn evalExpression(exp: &ast::Expression) -> object::Object {
+fn evalExpression(exp: &ast::Expression, env: &mut object::Environment) -> object::Object {
     match exp {
-        ast::Expression::IntergerLiteral{Token, Value} => object::Object::Integer{Value: *Value},
-        ast::Expression::Boolean{Token, Value} => if *Value {TRUE} else {FALSE},
-        ast::Expression::PrefixExpression{Token, Operator, Right} => {
-            let right = evalExpression(Right);
-            if isError(&right) {return right}
+        ast::Expression::IntergerLiteral { Token, Value } => {
+            object::Object::Integer { Value: *Value }
+        }
+        ast::Expression::Boolean { Token, Value } => {
+            if *Value {
+                TRUE
+            } else {
+                FALSE
+            }
+        }
+        ast::Expression::PrefixExpression {
+            Token,
+            Operator,
+            Right,
+        } => {
+            let right = evalExpression(Right, env);
+            if isError(&right) {
+                return right;
+            }
             if let object::Object::Null = right {
                 object::Object::Null
             } else {
                 evalPrefixExpression(Operator, right)
             }
-        },
-        ast::Expression::InfixExpression{Token, Left, Operator, Right} => {
-            let left = evalExpression(Left);
-            if isError(&left) {return left;}
-            let right = evalExpression(Right);
-            if isError(&right) {return right;}
+        }
+        ast::Expression::InfixExpression {
+            Token,
+            Left,
+            Operator,
+            Right,
+        } => {
+            let left = evalExpression(Left, env);
+            if isError(&left) {
+                return left;
+            }
+            let right = evalExpression(Right, env);
+            if isError(&right) {
+                return right;
+            }
             evalInfixExpression(Operator, left, right)
-        },
-        ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} => {
-            evalIfExpression(exp)
-        },
-        _ => object::Object::Null
+        }
+        ast::Expression::IfExpression {
+            Token,
+            Condition,
+            Consequence,
+            Alternative,
+        } => evalIfExpression(exp, env),
+        ast::Expression::Identifier(idt) => evalIdentifier(idt, env),
+        _ => object::Object::Null,
     }
 }
 
@@ -80,59 +120,117 @@ fn evalBangOperatorExpression(right: object::Object) -> object::Object {
 }
 
 fn evalMinusPrefixOperatorExpression(right: object::Object) -> object::Object {
-    if let object::Object::Integer{Value} = right {
-        object::Object::Integer{Value: -Value}
+    if let object::Object::Integer { Value } = right {
+        object::Object::Integer { Value: -Value }
     } else {
         newError(format!("unknown operator: -{}", right.Type()))
     }
 }
 
-fn evalInfixExpression(operator: &String, left: object::Object, right: object::Object) -> object::Object {
-    if let object::Object::Integer{Value: lv} = left {
-        if let object::Object::Integer{Value: rv} = right {
-            return evalIntegerInfixExpression(operator, lv, rv)
+fn evalInfixExpression(
+    operator: &String,
+    left: object::Object,
+    right: object::Object,
+) -> object::Object {
+    if let object::Object::Integer { Value: lv } = left {
+        if let object::Object::Integer { Value: rv } = right {
+            return evalIntegerInfixExpression(operator, lv, rv);
         }
     }
 
     if *operator == String::from("==") {
-        return if left == right {TRUE} else {FALSE}
-    } 
-    else if *operator == String::from("!=") {
-        return if left != right {TRUE} else {FALSE}
+        return if left == right { TRUE } else { FALSE };
+    } else if *operator == String::from("!=") {
+        return if left != right { TRUE } else { FALSE };
     }
 
     if left.Type() != right.Type() {
-        return newError(format!("type mismatch: {} {} {}", left.Type(), operator, right.Type()));
+        return newError(format!(
+            "type mismatch: {} {} {}",
+            left.Type(),
+            operator,
+            right.Type()
+        ));
     }
 
-    newError(format!("unknown operator: {} {} {}", left.Type(), operator, right.Type()))
+    newError(format!(
+        "unknown operator: {} {} {}",
+        left.Type(),
+        operator,
+        right.Type()
+    ))
 }
 
-fn evalIntegerInfixExpression(operator: &String, left: i64, right:i64) -> object::Object {
+fn evalIntegerInfixExpression(operator: &String, left: i64, right: i64) -> object::Object {
     match operator.as_ref() {
-        "+" => object::Object::Integer{Value: left + right},
-        "-" => object::Object::Integer{Value: left - right},
-        "*" => object::Object::Integer{Value: left * right},
-        "/" => object::Object::Integer{Value: left / right},
-        "<" => if left < right {TRUE} else {FALSE},
-        ">" => if left > right {TRUE} else {FALSE},
-        "==" => if left == right {TRUE} else {FALSE},
-        "!=" => if left != right {TRUE} else {FALSE},
-        _ => newError(format!("unknown operator: {} {} {}", object::INTEGER_OBJ, operator, object::INTEGER_OBJ)),
+        "+" => object::Object::Integer {
+            Value: left + right,
+        },
+        "-" => object::Object::Integer {
+            Value: left - right,
+        },
+        "*" => object::Object::Integer {
+            Value: left * right,
+        },
+        "/" => object::Object::Integer {
+            Value: left / right,
+        },
+        "<" => {
+            if left < right {
+                TRUE
+            } else {
+                FALSE
+            }
+        }
+        ">" => {
+            if left > right {
+                TRUE
+            } else {
+                FALSE
+            }
+        }
+        "==" => {
+            if left == right {
+                TRUE
+            } else {
+                FALSE
+            }
+        }
+        "!=" => {
+            if left != right {
+                TRUE
+            } else {
+                FALSE
+            }
+        }
+        _ => newError(format!(
+            "unknown operator: {} {} {}",
+            object::INTEGER_OBJ,
+            operator,
+            object::INTEGER_OBJ
+        )),
     }
 }
 
-fn evalIfExpression(ie: &ast::Expression) -> object::Object {
-    if let ast::Expression::IfExpression{Token, Condition, Consequence, Alternative} = ie {
-        let condition = evalExpression(Condition);
-        if isError(&condition) {return condition;}
+fn evalIfExpression(ie: &ast::Expression, env: &mut object::Environment) -> object::Object {
+    if let ast::Expression::IfExpression {
+        Token,
+        Condition,
+        Consequence,
+        Alternative,
+    } = ie
+    {
+        let condition = evalExpression(Condition, env);
+        if isError(&condition) {
+            return condition;
+        }
         if isTruthy(&condition) {
-            return evalStatement(Consequence);
-        } 
+            return evalStatement(Consequence, env);
+        }
         if let ast::Statement::Nil = Alternative.as_ref() {
             return object::Object::Null;
         } else {
-            return evalStatement(Alternative);
+            return evalStatement(Alternative, env);
         }
     } else {
         panic!("ie is not ast::Expression::IfExpression. got={}", ie);
@@ -148,11 +246,11 @@ fn isTruthy(obj: &object::Object) -> bool {
     }
 }
 
-fn evalBlockStatement(block: &ast::Statement) -> object::Object {
-    if let ast::Statement::BlockStatement{Token, Statements} = block {
+fn evalBlockStatement(block: &ast::Statement, env: &mut object::Environment) -> object::Object {
+    if let ast::Statement::BlockStatement { Token, Statements } = block {
         let mut result: object::Object = object::Object::Null;
         for statement in Statements.iter() {
-            result = evalStatement(statement);
+            result = evalStatement(statement, env);
 
             if result != object::Object::Null {
                 let rt = result.Type();
@@ -168,9 +266,17 @@ fn evalBlockStatement(block: &ast::Statement) -> object::Object {
 }
 
 fn newError(format: String) -> object::Object {
-    object::Object::Error{Message: format}
+    object::Object::Error { Message: format }
 }
 
 fn isError(obj: &object::Object) -> bool {
     obj.Type() == object::ERROR_OBJ
+}
+
+fn evalIdentifier(node: &ast::Identifier, env: &mut object::Environment) -> object::Object {
+    let val = env.Get(&node.Value);
+    match val {
+        Some(s) => s.clone(),
+        None => newError(format!("identifier not found: {}", node.Value)),
+    }
 }

@@ -436,3 +436,17 @@ fn TestLetStatements() {
         assert_eq!(true, testIntegerObject(&testEval(&tt.input), tt.expected));
     }
 }
+
+#[test]
+fn TestFunctionObject() {
+    let input = String::from("fn(x) {x + 2;}");
+    let evaluated = testEval(&input);
+    if let object::Object::Function{Parameters, Body, Env} = evaluated {
+        assert_eq!(1, Parameters.len(), "function has wrong parameters. Parameters={:?}", Parameters);
+        assert_eq!(String::from("x"), Parameters[0].into_string(), "parameter is not 'x'. got={}", Parameters[0]);
+        let expectedBody = String::from("(x + 2)");
+        assert_eq!(Body.into_string(), expectedBody, "body is not {}. got={}.", expectedBody, Body.into_string());
+    } else {
+        panic!("object is not Function. got={}", evaluated);
+    }
+}

@@ -98,6 +98,9 @@ fn evalExpression(exp: &ast::Expression, env: &mut object::Environment) -> objec
             Alternative,
         } => evalIfExpression(exp, env),
         ast::Expression::Identifier(idt) => evalIdentifier(idt, env),
+        ast::Expression::FunctionLiteral{Token, Parameters, Body} => {
+            object::Object::Function{Parameters: Parameters.clone(), Body: Body.clone(), Env: env.clone()}
+        },
         _ => object::Object::Null,
     }
 }

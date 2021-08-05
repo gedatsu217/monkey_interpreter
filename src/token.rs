@@ -36,20 +36,13 @@ pub const IF: TokenType = "IF";
 pub const ELSE: TokenType = "ELSE";
 pub const RETURN: TokenType = "RETURN";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Token {
     pub Type: TokenType,
     pub Literal: String,
 }
 
-impl Clone for Token {
-    fn clone(&self) -> Self {
-        Token {
-            Type: self.Type,
-            Literal: self.Literal.clone(),
-        }
-    }
-}
+
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

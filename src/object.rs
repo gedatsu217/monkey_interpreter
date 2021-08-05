@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt;
+use crate::ast;
 
 pub type ObjectType = &'static str;
 
@@ -8,6 +9,7 @@ pub const INTEGER_OBJ: ObjectType = "INTEGER";
 pub const NULL_OBJ: ObjectType = "NULL";
 pub const RETURN_VALUE_OBJ: ObjectType = "RETURN_VALUE";
 pub const ERROR_OBJ: ObjectType = "ERROR";
+pub const FUNCTION_OBJ: ObjectType = "FUNCTION";
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum Object {
@@ -15,6 +17,7 @@ pub enum Object {
     Boolean { Value: bool },
     ReturnValue { Value: Box<Object> },
     Error { Message: String },
+    Function {Parameters: Vec<ast::Expression>, Body: Box<ast::Statement>, Env: Environment},
     Null,
 }
 
@@ -25,6 +28,7 @@ impl Object {
             Object::Boolean { .. } => BOOLEAN_OBJ,
             Object::ReturnValue { .. } => RETURN_VALUE_OBJ,
             Object::Error { .. } => ERROR_OBJ,
+            Object::Function{ .. } => FUNCTION_OBJ,
             Object::Null => NULL_OBJ,
         }
     }
@@ -35,6 +39,15 @@ impl Object {
             Object::Boolean { Value } => format!("{}", Value),
             Object::ReturnValue { Value } => Value.Inspect(),
             Object::Error { Message } => format! {"ERROR: {}", Message},
+            Object::Function {Parameters, Body, Env} => {
+                let mut params = vec![];
+                for p in Parameters.iter() {
+                    params.push(p.into_string());
+                }
+                format!{"fn({}) {{
+                    {}
+                }}", params.join(" "), Body.into_string()}
+            }
             Object::Null => String::from("null"),
         }
     }
@@ -59,6 +72,10 @@ impl fmt::Display for Object {
                 "Object::Error{{Message: {}}}",
                 Message
             },
+            Object::Function {Parameters, Body, Env} => write!{
+                f,
+                "Object::Function"
+            },
             Object::Null => write! {
                 f,
                 "Object::Null"
@@ -67,6 +84,7 @@ impl fmt::Display for Object {
     }
 }
 
+#[derive(PartialEq, Eq, Clone)]
 pub struct Environment {
     store: HashMap<String, Object>,
 }

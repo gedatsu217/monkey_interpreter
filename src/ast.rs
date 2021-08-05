@@ -1,6 +1,7 @@
 use crate::token;
 use std::fmt;
 
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Statement {
     LetStatement {
         Token: token::Token,
@@ -62,13 +63,14 @@ impl Statement {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Identifier {
     pub Token: token::Token,
     pub Value: String,
 }
 
 impl Identifier {
-    fn into_string(&self) -> String {
+    pub fn into_string(&self) -> String {
         self.Token.Literal.clone()
     }
 }
@@ -79,6 +81,7 @@ impl fmt::Display for Identifier {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Expression {
     Nil,
     Identifier(Identifier),

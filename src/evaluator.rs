@@ -98,9 +98,31 @@ fn evalExpression(exp: &ast::Expression, env: &mut object::Environment) -> objec
             Alternative,
         } => evalIfExpression(exp, env),
         ast::Expression::Identifier(idt) => evalIdentifier(idt, env),
-        ast::Expression::FunctionLiteral{Token, Parameters, Body} => {
-            object::Object::Function{Parameters: Parameters.clone(), Body: Body.clone(), Env: env.clone()}
+        ast::Expression::FunctionLiteral {
+            Token,
+            Parameters,
+            Body,
+        } => object::Object::Function {
+            Parameters: Parameters.clone(),
+            Body: Body.clone(),
+            Env: env.clone(),
         },
+        ast::Expression::CallExpression {
+            Token,
+            Function,
+            Arguments,
+        } => {
+            let function = evalExpression(Function, env);
+            if isError(&function) {
+                return function;
+            }
+            let mut args = evalExpressions(Arguments, env);
+            if args.len() == 1 && isError(&args[0]) {
+                return args[0].clone();
+            }
+
+            applyFunction(function, args)
+        }
         _ => object::Object::Null,
     }
 }
@@ -281,5 +303,65 @@ fn evalIdentifier(node: &ast::Identifier, env: &mut object::Environment) -> obje
     match val {
         Some(s) => s.clone(),
         None => newError(format!("identifier not found: {}", node.Value)),
+    }
+}
+
+fn evalExpressions(
+    exps: &Vec<ast::Expression>,
+    env: &mut object::Environment,
+) -> Vec<object::Object> {
+    let mut result = vec![];
+    for e in exps.iter() {
+        let evaluated = evalExpression(e, env);
+        if isError(&evaluated) {
+            return vec![evaluated];
+        }
+        result.push(evaluated);
+    }
+
+    result
+}
+
+fn applyFunction(f: object::Object, args: Vec<object::Object>) -> object::Object {
+    if let object::Object::Function {
+        Parameters,
+        Body,
+        Env,
+    } = &f
+    {
+        let mut extendedEnv = extendFunctionEnv(f.clone(), args);
+        let evaluated = evalStatement(Body, &mut extendedEnv);
+        unwrapReturnValue(evaluated)
+    } else {
+        return newError(format!("not a function: {}", f.Type()));
+    }
+}
+
+fn extendFunctionEnv(f: object::Object, args: Vec<object::Object>) -> object::Environment {
+    if let object::Object::Function {
+        Parameters,
+        Body,
+        Env,
+    } = f
+    {
+        let mut env = object::NewEnclosedEnvironment(Env);
+        for (i, param) in Parameters.iter().enumerate() {
+            if let ast::Expression::Identifier(x) = param {
+                env.Set(&x.Value, args[i].clone());
+            } else {
+                panic!();
+            }
+        }
+        env
+    } else {
+        panic!();
+    }
+}
+
+fn unwrapReturnValue(obj: object::Object) -> object::Object {
+    if let object::Object::ReturnValue { Value } = obj {
+        *Value
+    } else {
+        obj
     }
 }

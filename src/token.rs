@@ -42,8 +42,6 @@ pub struct Token {
     pub Literal: String,
 }
 
-
-
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write! {f, "Token{{Type: {}, Literal: {}}}", self.Type, self.Literal}

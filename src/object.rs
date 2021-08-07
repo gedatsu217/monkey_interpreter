@@ -1,6 +1,6 @@
+use crate::ast;
 use std::collections::HashMap;
 use std::fmt;
-use crate::ast;
 
 pub type ObjectType = &'static str;
 
@@ -13,11 +13,23 @@ pub const FUNCTION_OBJ: ObjectType = "FUNCTION";
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum Object {
-    Integer { Value: i64 },
-    Boolean { Value: bool },
-    ReturnValue { Value: Box<Object> },
-    Error { Message: String },
-    Function {Parameters: Vec<ast::Expression>, Body: Box<ast::Statement>, Env: Environment},
+    Integer {
+        Value: i64,
+    },
+    Boolean {
+        Value: bool,
+    },
+    ReturnValue {
+        Value: Box<Object>,
+    },
+    Error {
+        Message: String,
+    },
+    Function {
+        Parameters: Vec<ast::Expression>,
+        Body: Box<ast::Statement>,
+        Env: Environment,
+    },
     Null,
 }
 
@@ -28,7 +40,7 @@ impl Object {
             Object::Boolean { .. } => BOOLEAN_OBJ,
             Object::ReturnValue { .. } => RETURN_VALUE_OBJ,
             Object::Error { .. } => ERROR_OBJ,
-            Object::Function{ .. } => FUNCTION_OBJ,
+            Object::Function { .. } => FUNCTION_OBJ,
             Object::Null => NULL_OBJ,
         }
     }
@@ -39,12 +51,16 @@ impl Object {
             Object::Boolean { Value } => format!("{}", Value),
             Object::ReturnValue { Value } => Value.Inspect(),
             Object::Error { Message } => format! {"ERROR: {}", Message},
-            Object::Function {Parameters, Body, Env} => {
+            Object::Function {
+                Parameters,
+                Body,
+                Env,
+            } => {
                 let mut params = vec![];
                 for p in Parameters.iter() {
                     params.push(p.into_string());
                 }
-                format!{"fn({}) {{
+                format! {"fn({}) {{
                     {}
                 }}", params.join(" "), Body.into_string()}
             }
@@ -72,7 +88,11 @@ impl fmt::Display for Object {
                 "Object::Error{{Message: {}}}",
                 Message
             },
-            Object::Function {Parameters, Body, Env} => write!{
+            Object::Function {
+                Parameters,
+                Body,
+                Env,
+            } => write! {
                 f,
                 "Object::Function"
             },
@@ -87,16 +107,34 @@ impl fmt::Display for Object {
 #[derive(PartialEq, Eq, Clone)]
 pub struct Environment {
     store: HashMap<String, Object>,
+    outer: Option<Box<Environment>>,
 }
 
 pub fn NewEnvironment() -> Environment {
     let s = HashMap::new();
-    Environment { store: s }
+    Environment {
+        store: s,
+        outer: None,
+    }
+}
+
+pub fn NewEnclosedEnvironment(outer: Environment) -> Environment {
+    Environment {
+        store: HashMap::new(),
+        outer: Some(Box::new(outer)),
+    }
 }
 
 impl Environment {
     pub fn Get(&self, name: &String) -> Option<&Object> {
-        self.store.get(name)
+        let obj = self.store.get(name);
+        match obj {
+            Some(x) => Some(x),
+            None => match &self.outer {
+                Some(x) => x.Get(name),
+                None => None,
+            },
+        }
     }
 
     pub fn Set(&mut self, name: &String, val: Object) -> Object {
